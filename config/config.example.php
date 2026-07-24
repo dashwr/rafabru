@@ -3,11 +3,14 @@
 declare(strict_types=1);
 
 return [
-    // Copy this file to a private location outside public_html in production.
+    // Copy this file to /home1/raf32088/rafabru-data/config.php in production.
     'data_dir' => '/home1/raf32088/rafabru-data',
     'session_name' => 'rafabru_admin',
-    'admin_username' => 'admin',
+    'session_timeout' => 1800,
+    'max_upload_bytes' => 25 * 1024 * 1024,
+    'admin_username' => 'serafim',
 
-    // Generate with: php -r "echo password_hash('YOUR_PASSWORD', PASSWORD_DEFAULT), PHP_EOL;"
+    // Generate the hash on the server. Never commit the plain password.
+    // php -r "echo password_hash('YOUR_PASSWORD', PASSWORD_DEFAULT), PHP_EOL;"
     'admin_password_hash' => 'REPLACE_WITH_PASSWORD_HASH',
 ];
