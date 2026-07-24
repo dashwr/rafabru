@@ -2,26 +2,32 @@
 
 ## Overview
 
-The source code lives in the private GitHub repository:
+Source repository:
 
 ```text
 dashwr/rafabru
 ```
 
-The live application will run on HostGator with PHP 8.3. GitHub Pages is not suitable because the administrator login, redirects, sessions, and editable JSON data require PHP.
-
-Planned public address:
+Live address:
 
 ```text
 https://rafabru.duckdns.org
 ```
 
-## Expected HostGator paths
+The live site runs on HostGator with PHP 8.3. GitHub Pages is not used because authentication, redirects, JSON writes, and MP3 uploads require PHP.
 
-Application document root:
+## Confirmed HostGator paths
+
+Public document root:
 
 ```text
 /home1/raf32088/public_html/rafabru/
+```
+
+Private deployed source/application copy:
+
+```text
+/home1/raf32088/rafabru-app/
 ```
 
 Private writable data:
@@ -30,11 +36,132 @@ Private writable data:
 /home1/raf32088/rafabru-data/
 ```
 
-These paths must be confirmed in cPanel before the deployment workflow is activated.
+The public document root receives the contents of `public/`. The private application directory receives the repository files needed by the PHP bootstrap, templates, and installer. The loader at `public/bootstrap.php` can locate the private application at:
+
+```text
+/home1/raf32088/rafabru-app/app/bootstrap.php
+```
+
+## Private production data
+
+Expected production layout:
+
+```text
+/home1/raf32088/rafabru-data/
+├── config.php
+├── settings.json
+├── links.json
+├── redirects.json
+├── songs.json
+└── audio/
+    └── uploaded MP3 files
+```
+
+This directory is never replaced by a normal code deployment.
+
+## Initial installation
+
+After the repository is present on the server, initialize the private directory from HostGator's terminal:
+
+```bash
+cd /home1/raf32088/rafabru-app
+php scripts/install.php
+```
+
+The installer:
+
+- Prompts for the administrator password without writing it in plaintext.
+- Uses `serafim` as the default administrator username.
+- Creates `/home1/raf32088/rafabru-data` and its private audio folder.
+- Stores only a PHP `password_hash()` value.
+- Copies the initial JSON templates only when their production files do not already exist.
+
+Use `--force` only when deliberately replacing the existing administrator password configuration:
+
+```bash
+php scripts/install.php --force
+```
+
+The password itself must never be put in a committed command, workflow file, README, or source file.
+
+## Manual first deployment
+
+The first deployment should be tested manually before GitHub Actions is enabled:
+
+1. Upload or clone the repository into `/home1/raf32088/rafabru-app/`.
+2. Run `php scripts/install.php` from that directory.
+3. Copy the contents of `public/` into `/home1/raf32088/public_html/rafabru/`.
+4. Confirm that `.htaccess` was copied; cPanel may hide dotfiles unless **Show Hidden Files** is enabled.
+5. Put the supplied favicon at `/home1/raf32088/public_html/rafabru/assets/images/favicon.png`.
+6. Open the public page and `/admin/` over HTTPS.
+7. Test login, page settings, an MP3 upload, link editing, and a temporary redirect.
+8. Deploy the same commit again and confirm that JSON data and uploaded MP3 files remain unchanged.
+
+## Automatic deployment model
+
+The eventual workflow should perform two code-only syncs:
+
+```text
+repository except mutable/local files
+→ /home1/raf32088/rafabru-app/
+
+public/ contents
+→ /home1/raf32088/public_html/rafabru/
+```
+
+It must exclude:
+
+```text
+config/config.local.php
+storage/runtime/
+*.mp3
+/home1/raf32088/rafabru-data/
+```
+
+Conceptual flow:
+
+```text
+push to main
+→ GitHub Actions validates PHP files
+→ private application copy is updated
+→ public files are updated
+→ production JSON and uploaded songs remain untouched
+```
+
+## Planned GitHub Actions secrets
+
+```text
+HOSTGATOR_HOST
+HOSTGATOR_PORT
+HOSTGATOR_USERNAME
+HOSTGATOR_SSH_KEY
+HOSTGATOR_PUBLIC_PATH
+HOSTGATOR_APP_PATH
+```
+
+Suggested values for the path secrets:
+
+```text
+HOSTGATOR_PUBLIC_PATH=/home1/raf32088/public_html/rafabru/
+HOSTGATOR_APP_PATH=/home1/raf32088/rafabru-app/
+```
+
+Do not commit cPanel credentials, SSH private keys, DuckDNS tokens, the administrator password, or the production configuration.
+
+## SSL
+
+AutoSSL has been run and the DuckDNS address opens. Keep HTTPS redirection in `.htaccess`, then verify both addresses:
+
+```text
+http://rafabru.duckdns.org
+https://rafabru.duckdns.org
+```
+
+The HTTP address should redirect to HTTPS.
 
 ## Separation from Projeto Ideal
 
-This repository and deployment must not modify or depend on:
+This project must not modify or depend on:
 
 ```text
 brunoupmidia/projetoideal-revamp
@@ -42,63 +169,10 @@ brunoupmidia/projetoideal-revamp
 /home1/raf32088/projetoideal-backend-staging
 ```
 
-Rafabru receives its own document root, private data directory, configuration, and deployment secrets.
-
-## Planned first deployment
-
-1. Confirm that `rafabru.duckdns.org` resolves to the HostGator server.
-2. Confirm AutoSSL has issued a valid certificate.
-3. Confirm the domain document root in cPanel.
-4. Create the private data directory outside `public_html`.
-5. Copy template JSON files into the private data directory.
-6. Create the production `config.php` with the administrator password hash.
-7. Upload the public PHP application.
-8. Test HTTPS, login, content editing, redirect handling, and music playback.
-9. Add GitHub Actions only after manual deployment works correctly.
-
-## Planned GitHub Actions secrets
-
-The eventual workflow may use secrets similar to:
-
-```text
-HOSTGATOR_HOST
-HOSTGATOR_PORT
-HOSTGATOR_USERNAME
-HOSTGATOR_SSH_KEY
-HOSTGATOR_DEPLOY_PATH
-RAFABRU_DATA_PATH
-```
-
-Do not commit any password, private key, DuckDNS token, cPanel credential, administrator password hash, or production configuration file.
-
-## Deployment behavior
-
-A deployment should update application files only. It must never delete or overwrite production JSON data created through the administrator panel.
-
-Conceptual flow:
-
-```text
-push to main
-→ GitHub Actions validates the repository
-→ application files are copied to the document root
-→ production data remains untouched
-```
-
-An rsync-style deployment should explicitly exclude production configuration and writable data.
-
-## SSL
-
-Do not force HTTPS until AutoSSL has successfully issued the certificate for `rafabru.duckdns.org`.
-
-After the certificate is valid, HTTPS redirection can be enabled in `.htaccess` or cPanel. Test both:
-
-```text
-http://rafabru.duckdns.org
-https://rafabru.duckdns.org
-```
+Rafabru has its own repository, application copy, document root, private data, credentials, and deployment workflow.
 
 ## Rollback
 
-The simplest rollback is to redeploy a known-good commit from GitHub. Because mutable production data is stored separately, rolling back application code should not erase links, settings, or redirects.
+Redeploy a known-good Git commit. Because mutable content and MP3 files live separately, rolling application code backward must not erase page content.
 
-Before a structural data-format change, create a timestamped copy of the JSON files in the private data directory.
+Before changing a JSON data format, create a timestamped backup of `/home1/raf32088/rafabru-data/`.
