@@ -2,6 +2,7 @@
     const root = document.querySelector('[data-player]');
     if (!root) return;
 
+    const t = (text) => window.rafabruI18n?.t(text) || text;
     const playlist = JSON.parse(root.dataset.playlist || '[]');
     const mode = root.dataset.mode === 'random' ? 'random' : 'sequential';
     const volume = Math.min(1, Math.max(0, Number(root.dataset.volume || 0.45)));
@@ -17,8 +18,8 @@
     audio.preload = 'metadata';
     audio.volume = volume;
 
-    const setStatus = (text) => {
-        if (name) name.textContent = text;
+    const setStatus = (text, translateText = false) => {
+        if (name) name.textContent = translateText ? t(text) : text;
     };
 
     const setButtons = (enabled) => {
@@ -38,7 +39,7 @@
         index = ((nextIndex % playlist.length) + playlist.length) % playlist.length;
         const track = playlist[index];
         audio.src = track.src;
-        setStatus(track.title || 'untitled song');
+        setStatus(track.title || t('untitled song'));
     };
 
     const play = async () => {
@@ -49,11 +50,11 @@
             await audio.play();
             if (playButton) {
                 playButton.textContent = 'Ⅱ';
-                playButton.setAttribute('aria-label', 'Pause music');
+                playButton.setAttribute('aria-label', t('Pause music'));
             }
             localStorage.setItem('rafabru_music_choice', 'play');
         } catch (error) {
-            setStatus('press play to start');
+            setStatus('press play to start', true);
         }
     };
 
@@ -61,7 +62,7 @@
         audio.pause();
         if (playButton) {
             playButton.textContent = '▶';
-            playButton.setAttribute('aria-label', 'Play music');
+            playButton.setAttribute('aria-label', t('Play music'));
         }
     };
 
@@ -72,7 +73,7 @@
     };
 
     if (!playlist.length) {
-        setStatus('no music available');
+        setStatus('no music available', true);
         setButtons(false);
         if (dialog) dialog.hidden = true;
         return;
@@ -90,7 +91,7 @@
 
     audio.addEventListener('ended', next);
     audio.addEventListener('error', () => {
-        setStatus('this song could not be played');
+        setStatus('this song could not be played', true);
         pause();
     });
 
