@@ -1,5 +1,6 @@
 # rafabru
 
-A tiny personal links page for Rafa and Bru.
+A tiny pink personal links page with one admin login, short redirects, and an editable MP3 playlist.
 
-See [`SITE_SPEC.md`](SITE_SPEC.md) for the planned site and [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for hosting notes.
+- [`SITE_SPEC.md`](SITE_SPEC.md)
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
