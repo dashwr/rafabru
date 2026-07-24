@@ -2,97 +2,180 @@
 
 declare(strict_types=1);
 
+require __DIR__ . '/bootstrap.php';
+
+$settings = rafabru_read_json('settings.json', []);
+$links = rafabru_sort_records(rafabru_read_json('links.json', []));
+$songs = rafabru_sort_records(rafabru_read_json('songs.json', []));
+
+$title = trim((string) ($settings['title'] ?? 'our corner')) ?: 'our corner';
+$subtitle = trim((string) ($settings['subtitle'] ?? 'welcome')) ?: 'welcome';
+$footerBefore = (string) ($settings['footer']['before'] ?? 'made with ');
+$footerAccent = (string) ($settings['footer']['accent'] ?? 'love');
+$footerAfter = (string) ($settings['footer']['after'] ?? ' by Sol. 28/10/2024');
+
+$visibleLinks = array_values(array_filter($links, static fn (array $link): bool => ($link['enabled'] ?? false) === true));
+$musicSettings = is_array($settings['music'] ?? null) ? $settings['music'] : [];
+$musicEnabled = ($musicSettings['enabled'] ?? true) === true;
+$musicMode = ($musicSettings['mode'] ?? 'sequential') === 'random' ? 'random' : 'sequential';
+$musicVolume = min(1, max(0, (float) ($musicSettings['volume'] ?? 0.45)));
+$showPlayer = ($musicSettings['show_player'] ?? true) === true;
+
+$playlist = [];
+if ($musicEnabled) {
+    foreach ($songs as $song) {
+        if (($song['enabled'] ?? false) !== true) {
+            continue;
+        }
+
+        $id = (string) ($song['id'] ?? '');
+        $filename = basename((string) ($song['filename'] ?? ''));
+        if ($id === '' || $filename === '' || !is_file(rafabru_audio_dir() . '/' . $filename)) {
+            continue;
+        }
+
+        $playlist[] = [
+            'id' => $id,
+            'title' => trim((string) ($song['title'] ?? '')) ?: 'untitled song',
+            'src' => '/audio.php?id=' . rawurlencode($id),
+        ];
+    }
+}
+
+$icons = [
+    'folder' => '📁',
+    'heart' => '♡',
+    'star' => '☆',
+    'music' => '♫',
+    'photo' => '▣',
+    'cloud' => '☁',
+    'letter' => '✉',
+    'flower' => '✿',
+    'gift' => '🎁',
+    'bow' => '୨୧',
+];
 ?><!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>rafabru</title>
-    <style>
-        :root {
-            color-scheme: light;
-            font-family: "MS Sans Serif", Tahoma, Verdana, sans-serif;
-            background: #fff4fa;
-            color: #465369;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            min-height: 100vh;
-            margin: 0;
-            display: grid;
-            place-items: center;
-            padding: 24px;
-            background:
-                radial-gradient(circle at 20% 20%, #ffffff 0 34px, transparent 35px),
-                radial-gradient(circle at 78% 32%, #cce9ff 0 28px, transparent 29px),
-                #fff4fa;
-        }
-
-        .window {
-            width: min(520px, 100%);
-            border: 2px solid;
-            border-color: #ffffff #8d899b #8d899b #ffffff;
-            background: #fffcfe;
-            box-shadow: 8px 8px 0 rgba(141, 137, 155, 0.16);
-        }
-
-        .titlebar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            min-height: 34px;
-            padding: 5px 7px;
-            background: #f2cbdf;
-            font-weight: 700;
-        }
-
-        .controls {
-            letter-spacing: 4px;
-            color: #465369;
-        }
-
-        .content {
-            padding: 36px 28px;
-            text-align: center;
-        }
-
-        h1 {
-            margin: 0 0 12px;
-            font-size: clamp(1.6rem, 6vw, 2.4rem);
-        }
-
-        p {
-            margin: 0 auto 24px;
-            max-width: 34rem;
-            line-height: 1.6;
-        }
-
-        .status {
-            display: inline-block;
-            border: 2px solid;
-            border-color: #ffffff #8d899b #8d899b #ffffff;
-            padding: 10px 16px;
-            background: #cce9ff;
-            font-weight: 700;
-        }
-    </style>
+    <meta name="theme-color" content="#f2b9d6">
+    <title><?= rafabru_h($title) ?></title>
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+    <link rel="stylesheet" href="/assets/css/site.css">
 </head>
 <body>
-    <main class="window" aria-labelledby="page-title">
-        <div class="titlebar">
-            <span>♡ rafabru.exe</span>
-            <span class="controls" aria-hidden="true">_ □ ×</span>
-        </div>
-        <section class="content">
-            <h1 id="page-title">our little corner</h1>
-            <p>The tiny links page is being assembled. The finished version will live here soon.</p>
-            <span class="status">☁ setup in progress ☁</span>
+    <main class="page-shell">
+        <section class="window" aria-labelledby="page-title">
+            <header class="titlebar">
+                <span class="titlebar__name">
+                    <span class="titlebar__icon" aria-hidden="true">♡</span>
+                    <?= rafabru_h(strtolower($title)) ?>.exe
+                </span>
+                <span class="window-controls" aria-hidden="true">
+                    <span class="window-control">_</span>
+                    <span class="window-control">□</span>
+                    <span class="window-control">×</span>
+                </span>
+            </header>
+
+            <nav class="toolbar" aria-label="Decorative application menu">
+                <span>File</span>
+                <span>Links</span>
+                <span>Music</span>
+            </nav>
+
+            <div class="content">
+                <header class="hero">
+                    <div class="cat-mark" aria-hidden="true">
+                        <span class="cat-face"></span>
+                        <span class="cat-bow"></span>
+                    </div>
+                    <h1 id="page-title"><?= rafabru_h($title) ?></h1>
+                    <p class="subtitle"><?= rafabru_h($subtitle) ?></p>
+                </header>
+
+                <section class="links" aria-label="Links">
+                    <?php if ($visibleLinks === []): ?>
+                        <div class="empty-state">
+                            <strong>nothing is pinned here yet ♡</strong>
+                            Our links will appear here when we choose to make them visible.
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($visibleLinks as $link): ?>
+                            <?php
+                            $iconKey = (string) ($link['icon'] ?? 'heart');
+                            $icon = $icons[$iconKey] ?? '♡';
+                            $description = trim((string) ($link['description'] ?? ''));
+                            $newTab = ($link['new_tab'] ?? true) === true;
+                            ?>
+                            <a
+                                class="link-button"
+                                href="<?= rafabru_h((string) ($link['url'] ?? '#')) ?>"
+                                <?= $newTab ? 'target="_blank" rel="noopener noreferrer"' : '' ?>
+                            >
+                                <span class="link-icon" aria-hidden="true"><?= rafabru_h($icon) ?></span>
+                                <span class="link-copy">
+                                    <span class="link-title"><?= rafabru_h((string) ($link['text'] ?? 'untitled link')) ?></span>
+                                    <?php if ($description !== ''): ?>
+                                        <span class="link-description"><?= rafabru_h($description) ?></span>
+                                    <?php endif; ?>
+                                </span>
+                                <span class="link-arrow" aria-hidden="true">→</span>
+                            </a>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </section>
+
+                <?php if ($showPlayer): ?>
+                    <section
+                        class="music-panel"
+                        data-player
+                        data-mode="<?= rafabru_h($musicMode) ?>"
+                        data-volume="<?= rafabru_h((string) $musicVolume) ?>"
+                        data-playlist="<?= rafabru_h(json_encode($playlist, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]') ?>"
+                        aria-label="Background music player"
+                    >
+                        <div class="music-panel__title">♫ music player</div>
+                        <div class="music-panel__body">
+                            <div class="now-playing" aria-live="polite">
+                                <span class="now-playing__label">now playing</span>
+                                <span class="now-playing__name" data-now-playing><?= $playlist === [] ? 'no music available' : rafabru_h((string) $playlist[0]['title']) ?></span>
+                            </div>
+                            <div class="player-controls">
+                                <button class="retro-button" type="button" data-play aria-label="Play music" <?= $playlist === [] ? 'disabled' : '' ?>>▶</button>
+                                <button class="retro-button" type="button" data-next aria-label="Next song" <?= $playlist === [] ? 'disabled' : '' ?>>▸▸</button>
+                            </div>
+                        </div>
+                    </section>
+                <?php endif; ?>
+
+                <footer class="site-footer">
+                    <?= rafabru_h($footerBefore) ?><span class="footer-accent"><?= rafabru_h($footerAccent) ?></span><?= rafabru_h($footerAfter) ?>
+                </footer>
+            </div>
         </section>
     </main>
+
+    <?php if ($playlist !== []): ?>
+        <div class="music-dialog" data-music-dialog hidden>
+            <section class="music-dialog__window" role="dialog" aria-modal="true" aria-labelledby="music-dialog-title">
+                <header class="titlebar">
+                    <span id="music-dialog-title">♫ background music</span>
+                    <span class="window-controls" aria-hidden="true"><span class="window-control">×</span></span>
+                </header>
+                <div class="music-dialog__body">
+                    <p>Would you like to play the music for our corner?</p>
+                    <div class="music-dialog__actions">
+                        <button class="retro-button" type="button" data-music-accept>play music</button>
+                        <button class="retro-button" type="button" data-music-decline>not now</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    <?php endif; ?>
+
+    <script src="/assets/js/player.js" defer></script>
 </body>
 </html>
