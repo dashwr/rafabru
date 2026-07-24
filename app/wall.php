@@ -167,9 +167,12 @@ function rafabru_wall_create_note(array $input): array
     $y = min(100000, max(130, $y));
 
     $database = rafabru_wall_database();
-    $database->exec('BEGIN IMMEDIATE');
+    $transactionStarted = false;
 
     try {
+        $database->exec('BEGIN IMMEDIATE');
+        $transactionStarted = true;
+
         $postNumber = (int) $database->query(
             'SELECT COALESCE(MAX(post_number), 0) + 1 FROM wall_notes'
         )->fetchColumn();
@@ -197,10 +200,18 @@ function rafabru_wall_create_note(array $input): array
             'created_at' => $timestamp,
             'updated_at' => $timestamp,
         ]);
-        $database->commit();
+
+        // BEGIN IMMEDIATE was issued as SQL, so finish it with matching SQL.
+        // PDO::commit() does not consistently recognize raw SQLite transactions.
+        $database->exec('COMMIT');
+        $transactionStarted = false;
     } catch (Throwable $error) {
-        if ($database->inTransaction()) {
-            $database->rollBack();
+        if ($transactionStarted) {
+            try {
+                $database->exec('ROLLBACK');
+            } catch (Throwable) {
+                // Preserve the original failure.
+            }
         }
         throw $error;
     }
