@@ -1,0 +1,26 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+config/config.php
+config/config.local.php
+
+# Production or local mutable data
+storage/data/
+*.log
+
+# SSH and credential files
+*.pem
+*.key
+*.ppk
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*~
