@@ -97,9 +97,9 @@ $icons = [
 
     <title><?= rafabru_h($title) ?></title>
     <link rel="icon" type="image/png" href="/assets/images/favicon.png">
-    <link rel="stylesheet" href="/assets/css/site.css?v=20260724-5">
-    <link rel="stylesheet" href="/assets/css/responsive.css?v=20260724-5">
-    <script src="/assets/js/lang.js?v=1" defer></script>
+    <link rel="stylesheet" href="/assets/css/site.css?v=20260724-6">
+    <link rel="stylesheet" href="/assets/css/responsive.css?v=20260724-6">
+    <script src="/assets/js/lang.js?v=3" defer></script>
 </head>
 <body>
     <main class="page-shell">
@@ -116,10 +116,14 @@ $icons = [
                 </span>
             </header>
 
-            <nav class="toolbar" aria-label="Application menu">
-                <span>File</span>
-                <span>Links</span>
-                <span>Music</span>
+            <nav class="toolbar toolbar--centered" aria-label="Application menu">
+                <span class="toolbar-balance" aria-hidden="true"></span>
+                <span class="toolbar-nav">
+                    <span>File</span>
+                    <span>Links</span>
+                    <span>Music</span>
+                    <a class="toolbar-menu-link" href="/write/">Write...</a>
+                </span>
                 <span class="toolbar-actions">
                     <label class="language-picker">
                         <span class="sr-only">Language</span>
