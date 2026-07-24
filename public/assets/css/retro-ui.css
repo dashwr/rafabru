@@ -69,6 +69,18 @@ small {
     object-fit: contain;
 }
 
+.login-window .titlebar > span:first-child,
+.admin-shell > .titlebar > span:first-child {
+    font-size: 0;
+}
+
+.login-window .titlebar > span:first-child::after,
+.admin-shell > .titlebar > span:first-child::after {
+    content: "♡ rafa & bru control panel";
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
 @media (max-width: 520px) {
     .toolbar {
         align-items: center;
