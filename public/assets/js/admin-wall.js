@@ -7,7 +7,27 @@
     if (!adminContent || !tabs || !dashboard) return;
 
     const csrf = document.querySelector('input[name="csrf"]')?.value || '';
-    const t = (value) => window.rafabruI18n?.t(value) || value;
+    const localPortuguese = {
+        'wall': 'parede',
+        'wall post-its': 'post-its da parede',
+        'Edit placement details or hide a post-it from the public wall.': 'Edite os detalhes de posição ou oculte um post-it da parede pública.',
+        'Loading post-its...': 'Carregando post-its...',
+        'Author': 'Autor',
+        'Horizontal position': 'Posição horizontal',
+        'Vertical position': 'Posição vertical',
+        'open notebook': 'abrir caderno',
+        'restore': 'restaurar',
+        'hide': 'ocultar',
+        'The wall was updated.': 'A parede foi atualizada.',
+        'No post-its have been published yet.': 'Nenhum post-it foi publicado ainda.',
+        'post-it records': 'registros de post-it',
+        'Request failed.': 'A solicitação falhou.'
+    };
+    const t = (value) => {
+        const translated = window.rafabruI18n?.t(value) || value;
+        if (translated !== value) return translated;
+        return window.rafabruI18n?.language === 'pt' ? (localPortuguese[value] || value) : value;
+    };
 
     const tab = document.createElement('a');
     tab.className = 'tab-link';
