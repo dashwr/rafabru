@@ -83,8 +83,8 @@ $icons = [
     <meta property="og:title" content="<?= rafabru_h($title) ?>">
     <meta property="og:description" content="A tiny pink Windows 98-style corner for links, songs, and little memories.">
     <meta property="og:url" content="https://rafabru.duckdns.org/">
-    <meta property="og:image" content="https://rafabru.duckdns.org/og-image.php?v=1">
-    <meta property="og:image:secure_url" content="https://rafabru.duckdns.org/og-image.php?v=1">
+    <meta property="og:image" content="https://rafabru.duckdns.org/og-image.php?v=2">
+    <meta property="og:image:secure_url" content="https://rafabru.duckdns.org/og-image.php?v=2">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -93,18 +93,19 @@ $icons = [
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="<?= rafabru_h($title) ?>">
     <meta name="twitter:description" content="A tiny pink Windows 98-style corner for links, songs, and little memories.">
-    <meta name="twitter:image" content="https://rafabru.duckdns.org/og-image.php?v=1">
+    <meta name="twitter:image" content="https://rafabru.duckdns.org/og-image.php?v=2">
 
     <title><?= rafabru_h($title) ?></title>
     <link rel="icon" type="image/png" href="/assets/images/favicon.png">
-    <link rel="stylesheet" href="/assets/css/site.css">
-    <link rel="stylesheet" href="/assets/css/responsive.css">
+    <link rel="stylesheet" href="/assets/css/site.css?v=20260724-5">
+    <link rel="stylesheet" href="/assets/css/responsive.css?v=20260724-5">
+    <script src="/assets/js/lang.js?v=1" defer></script>
 </head>
 <body>
     <main class="page-shell">
         <section class="window" aria-labelledby="page-title">
             <header class="titlebar">
-                <span class="titlebar__name">
+                <span class="titlebar__name" data-i18n-skip>
                     <span class="titlebar__icon" aria-hidden="true">♡</span>
                     <?= rafabru_h(strtolower($title)) ?>.exe
                 </span>
@@ -119,7 +120,16 @@ $icons = [
                 <span>File</span>
                 <span>Links</span>
                 <span>Music</span>
-                <a class="toolbar-login" href="/admin/">login</a>
+                <span class="toolbar-actions">
+                    <label class="language-picker">
+                        <span class="sr-only">Language</span>
+                        <select class="language-select" data-language-select aria-label="Language">
+                            <option value="en">English</option>
+                            <option value="pt">Português</option>
+                        </select>
+                    </label>
+                    <a class="toolbar-login" href="/admin/">login</a>
+                </span>
             </nav>
 
             <div class="content">
@@ -132,11 +142,11 @@ $icons = [
                         alt=""
                         decoding="async"
                     >
-                    <h1 id="page-title"><?= rafabru_h($title) ?></h1>
-                    <p class="subtitle"><?= rafabru_h($subtitle) ?></p>
+                    <h1 id="page-title" data-i18n-skip><?= rafabru_h($title) ?></h1>
+                    <p class="subtitle" data-i18n-skip><?= rafabru_h($subtitle) ?></p>
                 </header>
 
-                <section class="links" aria-label="Links">
+                <section class="links" aria-label="Links section">
                     <?php if ($visibleLinks === []): ?>
                         <div class="empty-state">
                             <strong>nothing is pinned here yet ♡</strong>
@@ -152,6 +162,7 @@ $icons = [
                             ?>
                             <a
                                 class="link-button"
+                                data-i18n-skip
                                 href="<?= rafabru_h((string) ($link['url'] ?? '#')) ?>"
                                 <?= $newTab ? 'target="_blank" rel="noopener noreferrer"' : '' ?>
                             >
@@ -181,7 +192,7 @@ $icons = [
                         <div class="music-panel__body">
                             <div class="now-playing" aria-live="polite">
                                 <span class="now-playing__label">now playing</span>
-                                <span class="now-playing__name" data-now-playing><?= $playlist === [] ? 'no music available' : rafabru_h((string) $playlist[0]['title']) ?></span>
+                                <span class="now-playing__name" data-now-playing<?= $playlist !== [] ? ' data-i18n-skip' : '' ?>><?= $playlist === [] ? 'no music available' : rafabru_h((string) $playlist[0]['title']) ?></span>
                             </div>
                             <div class="player-controls">
                                 <button class="retro-button" type="button" data-play aria-label="Play music" <?= $playlist === [] ? 'disabled' : '' ?>>▶</button>
@@ -191,7 +202,7 @@ $icons = [
                     </section>
                 <?php endif; ?>
 
-                <footer class="site-footer">
+                <footer class="site-footer" data-i18n-skip>
                     <?= rafabru_h($footerBefore) ?><span class="footer-accent"><?= rafabru_h($footerAccent) ?></span><?= rafabru_h($footerAfter) ?>
                 </footer>
             </div>
@@ -206,7 +217,7 @@ $icons = [
                     <span class="window-controls" aria-hidden="true"><span class="window-control">×</span></span>
                 </header>
                 <div class="music-dialog__body">
-                    <p>Would you like to play the music for <?= rafabru_h($title) ?>?</p>
+                    <p><span>Would you like to play the music for</span> <span data-i18n-skip><?= rafabru_h($title) ?></span>?</p>
                     <div class="music-dialog__actions">
                         <button class="retro-button" type="button" data-music-accept>play music</button>
                         <button class="retro-button" type="button" data-music-decline>not now</button>
@@ -216,6 +227,6 @@ $icons = [
         </div>
     <?php endif; ?>
 
-    <script src="/assets/js/player.js" defer></script>
+    <script src="/assets/js/player.js?v=2" defer></script>
 </body>
 </html>
