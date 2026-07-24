@@ -32,14 +32,21 @@ small {
     font-family: "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Geneva, Arial, sans-serif !important;
 }
 
-.toolbar-login {
+.toolbar-actions {
     margin-left: auto;
     display: inline-flex;
-    min-width: 68px;
-    min-height: 26px;
     align-items: center;
-    justify-content: center;
-    padding: 3px 10px;
+    gap: 6px;
+}
+
+.language-picker {
+    display: inline-flex;
+    align-items: center;
+}
+
+.language-select,
+.toolbar-login {
+    min-height: 26px;
     border: 2px solid;
     border-color: #fff #9f8c9a #9f8c9a #fff;
     background: #f7ddeb;
@@ -47,12 +54,28 @@ small {
     font-size: 0.75rem;
     font-weight: 700;
     line-height: 1;
-    text-decoration: none;
     box-shadow: 1px 1px 0 rgba(81, 71, 93, 0.14);
+}
+
+.language-select {
+    min-width: 92px;
+    padding: 2px 24px 2px 7px;
+    cursor: pointer;
+}
+
+.toolbar-login {
+    display: inline-flex;
+    min-width: 68px;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 10px;
+    text-decoration: none;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
 
+.language-select:hover,
+.language-select:focus-visible,
 .toolbar-login:hover,
 .toolbar-login:focus-visible {
     background: #eaf6ff;
@@ -63,6 +86,18 @@ small {
 .toolbar-login:active {
     border-color: #9f8c9a #fff #fff #9f8c9a;
     transform: translate(1px, 1px);
+}
+
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
 }
 
 .hero-mascot {
@@ -81,10 +116,24 @@ small {
     font-weight: 700;
 }
 
+html[lang="pt-BR"] .login-window .titlebar > span:first-child::after,
+html[lang="pt-BR"] .admin-shell > .titlebar > span:first-child::after {
+    content: "♡ painel de controle rafa & bru";
+}
+
 @media (max-width: 520px) {
     .toolbar {
         align-items: center;
         gap: 6px;
+    }
+
+    .toolbar-actions {
+        gap: 4px;
+    }
+
+    .language-select {
+        min-width: 86px;
+        min-height: 34px;
     }
 
     .toolbar-login {
@@ -95,5 +144,16 @@ small {
 
     .hero h1 {
         font-size: clamp(2rem, 12vw, 3rem);
+    }
+}
+
+@media (max-width: 380px) {
+    .toolbar {
+        flex-wrap: wrap;
+    }
+
+    .toolbar-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
 }
