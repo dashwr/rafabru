@@ -75,6 +75,26 @@ $icons = [
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#f2b9d6">
+    <meta name="description" content="A tiny pink Windows 98-style corner for Rafa & Bru's links, songs, and little memories.">
+    <link rel="canonical" href="https://rafabru.duckdns.org/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="rafa & bru">
+    <meta property="og:title" content="<?= rafabru_h($title) ?>">
+    <meta property="og:description" content="A tiny pink Windows 98-style corner for links, songs, and little memories.">
+    <meta property="og:url" content="https://rafabru.duckdns.org/">
+    <meta property="og:image" content="https://rafabru.duckdns.org/og-image.php?v=1">
+    <meta property="og:image:secure_url" content="https://rafabru.duckdns.org/og-image.php?v=1">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="A pink Windows 98-style window for Rafa and Bru with Cinnamoroll and balloons.">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?= rafabru_h($title) ?>">
+    <meta name="twitter:description" content="A tiny pink Windows 98-style corner for links, songs, and little memories.">
+    <meta name="twitter:image" content="https://rafabru.duckdns.org/og-image.php?v=1">
+
     <title><?= rafabru_h($title) ?></title>
     <link rel="icon" type="image/png" href="/assets/images/favicon.png">
     <link rel="stylesheet" href="/assets/css/site.css">
