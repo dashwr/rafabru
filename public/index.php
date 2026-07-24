@@ -81,19 +81,20 @@ $icons = [
                 </span>
             </header>
 
-            <nav class="toolbar" aria-label="Decorative application menu">
+            <nav class="toolbar" aria-label="Application menu">
                 <span>File</span>
                 <span>Links</span>
                 <span>Music</span>
+                <a class="toolbar-login" href="/admin/">login</a>
             </nav>
 
             <div class="content">
                 <header class="hero">
                     <img
                         class="hero-mascot"
-                        src="/assets/images/cinnamoroll.svg"
-                        width="500"
-                        height="600"
+                        src="/assets/images/cinnamoroll.png"
+                        width="250"
+                        height="300"
                         alt=""
                         decoding="async"
                     >
