@@ -58,12 +58,13 @@ $icons = [
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#f2b9d6">
     <title><?= rafabru_h($title) ?></title>
     <link rel="icon" type="image/png" href="/assets/images/favicon.png">
     <link rel="stylesheet" href="/assets/css/site.css">
+    <link rel="stylesheet" href="/assets/css/responsive.css">
 </head>
 <body>
     <main class="page-shell">
@@ -88,10 +89,14 @@ $icons = [
 
             <div class="content">
                 <header class="hero">
-                    <div class="cat-mark" aria-hidden="true">
-                        <span class="cat-face"></span>
-                        <span class="cat-bow"></span>
-                    </div>
+                    <img
+                        class="hero-mascot"
+                        src="/assets/images/cinnamoroll.svg"
+                        width="500"
+                        height="600"
+                        alt=""
+                        decoding="async"
+                    >
                     <h1 id="page-title"><?= rafabru_h($title) ?></h1>
                     <p class="subtitle"><?= rafabru_h($subtitle) ?></p>
                 </header>
