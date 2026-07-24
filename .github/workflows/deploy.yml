@@ -1,0 +1,145 @@
+name: deploy production
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'config/**'
+      - 'public/**'
+      - 'scripts/**'
+      - 'storage/templates/**'
+      - '.github/workflows/deploy.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rafabru-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SSH_HOST: ${{ secrets.HOSTGATOR_HOST }}
+      SSH_PORT: ${{ secrets.HOSTGATOR_PORT }}
+      SSH_USER: ${{ secrets.HOSTGATOR_USERNAME }}
+      SSH_PRIVATE_KEY: ${{ secrets.HOSTGATOR_SSH_KEY }}
+      PUBLIC_PATH: ${{ secrets.HOSTGATOR_PUBLIC_PATH }}
+      APP_PATH: ${{ secrets.HOSTGATOR_APP_PATH }}
+      DATA_PATH: ${{ secrets.RAFABRU_DATA_PATH }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Validate application files
+        shell: bash
+        run: |
+          set -euo pipefail
+          find app public scripts config -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -r '
+          foreach (glob("storage/templates/*.json") as $file) {
+              json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
+              echo "valid: {$file}\n";
+          }
+          '
+
+      - name: Validate deployment secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(SSH_HOST SSH_PORT SSH_USER SSH_PRIVATE_KEY PUBLIC_PATH APP_PATH DATA_PATH)
+          for name in "${required[@]}"; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required repository secret for ${name}." >&2
+              exit 1
+            fi
+          done
+
+      - name: Configure SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > "$HOME/.ssh/rafabru_deploy"
+          chmod 600 "$HOME/.ssh/rafabru_deploy"
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Verify HostGator connection
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/rafabru_deploy" -p "$SSH_PORT" \
+            -o BatchMode=yes \
+            "$SSH_USER@$SSH_HOST" \
+            'printf "Connected to HostGator.\n"'
+
+      - name: Prepare remote directories
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/rafabru_deploy" -p "$SSH_PORT" \
+            "$SSH_USER@$SSH_HOST" \
+            "mkdir -p '$PUBLIC_PATH' '$APP_PATH/app' '$APP_PATH/config' '$APP_PATH/scripts' '$APP_PATH/storage/templates' '$DATA_PATH/audio'"
+
+      - name: Deploy public files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync -az --delete \
+            -e "ssh -i $HOME/.ssh/rafabru_deploy -p $SSH_PORT" \
+            public/ "$SSH_USER@$SSH_HOST:$PUBLIC_PATH/"
+
+      - name: Deploy private application code
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync -az --delete \
+            -e "ssh -i $HOME/.ssh/rafabru_deploy -p $SSH_PORT" \
+            app/ "$SSH_USER@$SSH_HOST:$APP_PATH/app/"
+
+          rsync -az --delete \
+            -e "ssh -i $HOME/.ssh/rafabru_deploy -p $SSH_PORT" \
+            config/ "$SSH_USER@$SSH_HOST:$APP_PATH/config/"
+
+          rsync -az --delete \
+            -e "ssh -i $HOME/.ssh/rafabru_deploy -p $SSH_PORT" \
+            scripts/ "$SSH_USER@$SSH_HOST:$APP_PATH/scripts/"
+
+          rsync -az --delete \
+            -e "ssh -i $HOME/.ssh/rafabru_deploy -p $SSH_PORT" \
+            storage/templates/ "$SSH_USER@$SSH_HOST:$APP_PATH/storage/templates/"
+
+      - name: Validate deployed PHP
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/rafabru_deploy" -p "$SSH_PORT" \
+            "$SSH_USER@$SSH_HOST" \
+            "PHP_BIN=/opt/cpanel/ea-php83/root/usr/bin/php; \
+             if [ ! -x \"\$PHP_BIN\" ]; then PHP_BIN=\$(command -v php); fi; \
+             \"\$PHP_BIN\" -l '$APP_PATH/app/bootstrap.php'; \
+             \"\$PHP_BIN\" -l '$PUBLIC_PATH/index.php'; \
+             if [ -f '$DATA_PATH/config.php' ]; then \
+               echo 'Private data is initialized.'; \
+             else \
+               echo 'NOTICE: Run the one-time installer before using the admin login.'; \
+             fi"
+
+      - name: Check public page
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --location \
+            --retry 3 --retry-delay 5 \
+            https://rafabru.duckdns.org/ > /dev/null || \
+            echo 'The files deployed, but the public HTTPS check did not pass yet.'
