@@ -1,5 +1,5 @@
 {
-  "title": "our corner",
+  "title": "rafa & bru",
   "subtitle": "welcome",
   "footer": {
     "before": "made with ",
@@ -11,5 +11,8 @@
     "show_player": true,
     "mode": "sequential",
     "volume": 0.45
-  }
+  },
+  "_migrations": [
+    "rename-site-rafa-bru-v1"
+  ]
 }
