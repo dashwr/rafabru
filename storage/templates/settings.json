@@ -1,0 +1,11 @@
+{
+  "title": "our little corner",
+  "subtitle": "a tiny place for our favorite links",
+  "footer": "made with care for rafa and bru",
+  "music": {
+    "enabled": false,
+    "display_name": "our song",
+    "file": "assets/audio/background.mp3",
+    "loop": true
+  }
+}
