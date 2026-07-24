@@ -5,3 +5,20 @@ body *::before,
 body *::after {
     font-family: "W95FA", "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Geneva, Arial, sans-serif !important;
 }
+
+.hero h1,
+.hero #page-title,
+.hero .subtitle {
+    font-family: "W95FA", "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Geneva, Arial, sans-serif !important;
+    font-synthesis: none;
+}
+
+.hero h1,
+.hero #page-title {
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+}
+
+.hero .subtitle {
+    font-weight: 400 !important;
+}
