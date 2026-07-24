@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 header('Content-Type: image/png');
-header('Cache-Control: public, max-age=86400, stale-while-revalidate=604800');
+header('Cache-Control: public, max-age=300, stale-while-revalidate=86400');
 header('X-Content-Type-Options: nosniff');
 
 $mascotPath = __DIR__ . '/assets/images/cinnamoroll.png';
@@ -27,14 +27,22 @@ function colour_image(int $width, int $height, int $red, int $green, int $blue, 
     return $image;
 }
 
-/** @param GdImage $image */
-function scaled_text($image, int $x, int $y, string $text, int $scale, int $colour): void
+/** @return array{width:int,height:int} */
+function scaled_text_size(string $text, int $scale, int $font = 5): array
 {
-    $font = 5;
-    $baseWidth = imagefontwidth($font) * strlen($text);
+    return [
+        'width' => imagefontwidth($font) * strlen($text) * $scale,
+        'height' => imagefontheight($font) * $scale,
+    ];
+}
+
+/** @param GdImage $image @param array{0:int,1:int,2:int} $rgb */
+function scaled_text($image, int $x, int $y, string $text, int $scale, array $rgb, int $font = 5): void
+{
+    $baseWidth = max(1, imagefontwidth($font) * strlen($text));
     $baseHeight = imagefontheight($font);
-    $source = colour_image(max(1, $baseWidth), $baseHeight, 255, 255, 255, 127);
-    $sourceColour = imagecolorallocate($source, 81, 71, 93);
+    $source = colour_image($baseWidth, $baseHeight, 255, 255, 255, 127);
+    $sourceColour = imagecolorallocate($source, $rgb[0], $rgb[1], $rgb[2]);
     imagestring($source, $font, 0, 0, $text, $sourceColour);
     imagecopyresized(
         $image,
@@ -49,6 +57,24 @@ function scaled_text($image, int $x, int $y, string $text, int $scale, int $colo
         $baseHeight
     );
     imagedestroy($source);
+}
+
+/** @param GdImage $image @param array{0:int,1:int,2:int} $rgb */
+function centered_text(
+    $image,
+    int $left,
+    int $top,
+    int $right,
+    int $bottom,
+    string $text,
+    int $scale,
+    array $rgb,
+    int $font = 5
+): void {
+    $size = scaled_text_size($text, $scale, $font);
+    $x = $left + (int) floor((($right - $left + 1) - $size['width']) / 2);
+    $y = $top + (int) floor((($bottom - $top + 1) - $size['height']) / 2);
+    scaled_text($image, max($left, $x), max($top, $y), $text, $scale, $rgb, $font);
 }
 
 $width = 1200;
@@ -67,9 +93,11 @@ $titlePinkLight = imagecolorallocate($image, 236, 160, 197);
 $toolbarPink = imagecolorallocate($image, 255, 246, 251);
 $linePink = imagecolorallocate($image, 242, 226, 236);
 $ink = imagecolorallocate($image, 81, 71, 93);
-$accent = imagecolorallocate($image, 194, 78, 137);
 $buttonPink = imagecolorallocate($image, 248, 220, 235);
-$blue = imagecolorallocate($image, 207, 234, 255);
+
+$inkRgb = [81, 71, 93];
+$accentRgb = [194, 78, 137];
+$whiteRgb = [255, 255, 255];
 
 imagefilledrectangle($image, 0, 0, $width, $height, $background);
 
@@ -94,7 +122,7 @@ for ($x = $x0 + 550; $x < $x1 - 6; $x++) {
 
 imagefilledrectangle($image, $x0 + 16, $y0 + 16, $x0 + 41, $y0 + 41, $toolbarPink);
 imagerectangle($image, $x0 + 16, $y0 + 16, $x0 + 41, $y0 + 41, $edgeLight);
-scaled_text($image, $x0 + 50, $y0 + 14, 'rafa & bru.exe', 2, $edgeLight);
+centered_text($image, $x0 + 50, $y0 + 6, $x0 + 390, $y0 + 54, 'rafa & bru.exe', 2, $whiteRgb, 4);
 
 $buttonX = $x1 - 122;
 foreach (['_', '[]', 'x'] as $index => $symbol) {
@@ -123,18 +151,24 @@ if (is_file($mascotPath) && function_exists('imagecreatefrompng')) {
     }
 }
 
-scaled_text($image, 585, 205, 'rafa & bru', 5, $ink);
-scaled_text($image, 590, 315, 'links, songs & little memories', 2, $accent);
+$textLeft = 545;
+$textRight = 1055;
+centered_text($image, $textLeft, 175, $textRight, 275, 'rafa & bru', 5, $inkRgb, 5);
+centered_text($image, $textLeft, 285, $textRight, 350, 'links, songs & little memories', 2, $accentRgb, 4);
 
-imagefilledrectangle($image, 590, 390, 820, 448, $buttonPink);
-imageline($image, 590, 390, 820, 390, $edgeLight);
-imageline($image, 590, 390, 590, 448, $edgeLight);
+$ctaLeft = 575;
+$ctaTop = 385;
+$ctaRight = 885;
+$ctaBottom = 450;
+imagefilledrectangle($image, $ctaLeft, $ctaTop, $ctaRight, $ctaBottom, $buttonPink);
+imageline($image, $ctaLeft, $ctaTop, $ctaRight, $ctaTop, $edgeLight);
+imageline($image, $ctaLeft, $ctaTop, $ctaLeft, $ctaBottom, $edgeLight);
 imagesetthickness($image, 3);
-imageline($image, 820, 390, 820, 448, $edgeDark);
-imageline($image, 590, 448, 820, 448, $edgeDark);
+imageline($image, $ctaRight, $ctaTop, $ctaRight, $ctaBottom, $edgeDark);
+imageline($image, $ctaLeft, $ctaBottom, $ctaRight, $ctaBottom, $edgeDark);
 imagesetthickness($image, 1);
-scaled_text($image, 625, 403, 'open our corner', 2, $ink);
-scaled_text($image, 590, 495, 'made with love <3', 2, $ink);
+centered_text($image, $ctaLeft + 8, $ctaTop + 5, $ctaRight - 8, $ctaBottom - 5, 'open our corner', 2, $inkRgb, 4);
+centered_text($image, $textLeft, 475, $textRight, 535, 'made with love <3', 2, $inkRgb, 5);
 
 imagepng($image, null, 7);
 imagedestroy($image);
