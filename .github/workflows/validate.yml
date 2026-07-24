@@ -2,7 +2,10 @@ name: validate
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'feature/**'
+      - 'fix/**'
   pull_request:
 
 permissions:
@@ -20,9 +23,13 @@ jobs:
         with:
           php-version: '8.3'
           coverage: none
+          extensions: pdo_sqlite, sqlite3, mbstring, curl
 
       - name: Lint PHP files
         run: find . -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Check JavaScript syntax
+        run: find public/assets/js -type f -name '*.js' -print0 | xargs -0 -n1 node --check
 
       - name: Validate JSON templates
         run: |
@@ -31,4 +38,41 @@ jobs:
               json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
               echo "valid: {$file}\n";
           }
+          '
+
+      - name: Smoke test SQLite wall
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/rafabru-ci-config.php <<'PHP'
+          <?php
+          return [
+              'data_dir' => '/tmp/rafabru-ci-data',
+              'session_name' => 'rafabru_ci',
+              'session_timeout' => 1800,
+              'max_upload_bytes' => 26214400,
+              'admin_username' => 'serafim',
+              'admin_password_hash' => 'REPLACE_WITH_PASSWORD_HASH',
+              'turnstile_site_key' => '',
+              'turnstile_secret_key' => '',
+          ];
+          PHP
+          export RAFABRU_CONFIG=/tmp/rafabru-ci-config.php
+          php scripts/migrate-wall.php
+          php -r '
+          require "app/bootstrap.php";
+          require "app/wall.php";
+          $note = rafabru_wall_create_note([
+              "body" => "First page\n\nSecond paragraph",
+              "author" => "CI",
+              "preview" => "Smoke test",
+              "title" => "",
+              "color" => "pink-2",
+              "x" => 0.5,
+              "y" => 300,
+          ]);
+          if (($note["author"] ?? "") !== "CI" || count(rafabru_wall_list_notes()) !== 1) {
+              throw new RuntimeException("Wall smoke test failed.");
+          }
+          echo "wall smoke test passed\n";
           '

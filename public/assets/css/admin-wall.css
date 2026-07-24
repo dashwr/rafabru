@@ -1,0 +1,85 @@
+.wall-admin-panel {
+    grid-column: 1 / -1;
+}
+
+.wall-admin-status {
+    min-height: 24px;
+    margin: 10px 0 14px;
+    color: #765c6a;
+}
+
+.wall-admin-records {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.wall-admin-record {
+    padding: 13px;
+    border: 2px solid;
+    border-color: #ffffff #9f8c9a #9f8c9a #ffffff;
+    background: #fff7fb;
+    box-shadow: 2px 2px 0 rgba(81, 71, 93, 0.10);
+}
+
+.wall-admin-record.is-deleted {
+    opacity: 0.62;
+    background: #eee7ea;
+}
+
+.wall-admin-record__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 11px;
+}
+
+.wall-admin-record__header strong {
+    overflow-wrap: anywhere;
+}
+
+.wall-admin-record__header small {
+    flex: 0 0 auto;
+    color: #897682;
+}
+
+.wall-admin-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 9px;
+}
+
+.wall-admin-field {
+    display: grid;
+    gap: 4px;
+}
+
+.wall-admin-field span {
+    color: #765c6a;
+    font-size: 0.76rem;
+}
+
+.wall-admin-field input {
+    width: 100%;
+}
+
+.wall-admin-preview {
+    min-height: 42px;
+    margin: 11px 0;
+    padding: 8px;
+    border: 1px dashed #cda9ba;
+    background: #fffafd;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.wall-admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.wall-admin-actions .button {
+    text-decoration: none;
+}

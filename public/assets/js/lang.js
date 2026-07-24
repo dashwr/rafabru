@@ -11,6 +11,7 @@
         'File': 'Arquivo',
         'Links': 'Links',
         'Music': 'Música',
+        'Write...': 'Escrever...',
         'login': 'entrar',
         'English': 'Inglês',
         'Português': 'Português',
@@ -92,6 +93,61 @@
         'create redirect': 'criar redirecionamento',
         'No redirects have been created.': 'Nenhum redirecionamento foi criado.',
 
+        'Published post-its': 'Post-its publicados',
+        'Create...': 'Criar...',
+        'Loading the wall...': 'Carregando a parede...',
+        'Notebook': 'Caderno',
+        'Notebook writing': 'Texto do caderno',
+        'Previous pages': 'Páginas anteriores',
+        'Next pages': 'Próximas páginas',
+        'Publish': 'Publicar',
+        'Nevermind': 'Deixa pra lá',
+        'Close': 'Fechar',
+        'Discard notebook': 'Descartar caderno',
+        'Discard notebook?': 'Descartar caderno?',
+        'Discard this unfinished notebook?': 'Descartar este caderno inacabado?',
+        'Your writing will be deleted from this browser.': 'Seu texto será apagado deste navegador.',
+        'Yes, discard': 'Sim, descartar',
+        'Keep writing': 'Continuar escrevendo',
+        'Confirm you\'re human': 'Confirme que você é humano',
+        'Complete the CAPTCHA to continue publishing.': 'Complete o CAPTCHA para continuar publicando.',
+        'Continue': 'Continuar',
+        'Go back': 'Voltar',
+        'Post-it designer': 'Editor de post-it',
+        'Choose how the post-it will look': 'Escolha como o post-it ficará',
+        'Post-it title': 'Título do post-it',
+        'Post-it preview': 'Prévia do post-it',
+        'Author': 'Autor',
+        'by:': 'por:',
+        'Post-it colors': 'Cores do post-it',
+        'Blue': 'Azul',
+        'Light blue': 'Azul-claro',
+        'Pink': 'Rosa',
+        'Light pink': 'Rosa-claro',
+        'White': 'Branco',
+        'Classic yellow': 'Amarelo clássico',
+        'Yes, publish': 'Sim, publicar',
+        'Move the post-it and click the wall to place it.': 'Mova o post-it e clique na parede para colocá-lo.',
+        'Cancel': 'Cancelar',
+        'Start writing here...': 'Comece a escrever aqui...',
+        'This notebook has reached its last page.': 'Este caderno chegou à última página.',
+        'Your unfinished notebook was restored.': 'Seu caderno inacabado foi restaurado.',
+        'That notebook could not be opened.': 'Não foi possível abrir esse caderno.',
+        'The unfinished notebook was discarded.': 'O caderno inacabado foi descartado.',
+        'Publishing is waiting for the CAPTCHA keys.': 'A publicação está aguardando as chaves do CAPTCHA.',
+        'The CAPTCHA could not be loaded.': 'Não foi possível carregar o CAPTCHA.',
+        'The CAPTCHA expired. Please try again.': 'O CAPTCHA expirou. Tente novamente.',
+        'Write something before publishing.': 'Escreva alguma coisa antes de publicar.',
+        'Checking CAPTCHA...': 'Verificando o CAPTCHA...',
+        'The CAPTCHA could not be confirmed. Please try again.': 'Não foi possível confirmar o CAPTCHA. Tente novamente.',
+        'Write who authored this post-it.': 'Escreva quem criou este post-it.',
+        'Add a short preview to the post-it.': 'Adicione uma prévia curta ao post-it.',
+        'The publishing permission expired. Complete the CAPTCHA again.': 'A permissão para publicar expirou. Complete o CAPTCHA novamente.',
+        'Saving the post-it...': 'Salvando o post-it...',
+        'The post-it is now on the wall.': 'O post-it agora está na parede.',
+        'The post-it could not be saved. Please try again.': 'Não foi possível salvar o post-it. Tente novamente.',
+        'The wall could not be loaded.': 'Não foi possível carregar a parede.',
+
         'The login form expired. Please try again.': 'O formulário de login expirou. Tente novamente.',
         'Welcome back, Serafim.': 'Bem-vindo de volta, Serafim.',
         'The username or password was not accepted.': 'O usuário ou a senha não foram aceitos.',
@@ -134,7 +190,7 @@
     const skipped = (node) => {
         const element = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
         return Boolean(element?.closest(
-            'script, style, input, textarea, [data-i18n-skip], .hero h1, .hero .subtitle, .site-footer, .link-button, .record__title, .record__meta'
+            'script, style, input, textarea, [data-i18n-skip], [data-notebook-flow], .hero h1, .hero .subtitle, .site-footer, .link-button, .record__title, .record__meta, .wall-postit, .placement-postit'
         ));
     };
 
@@ -168,6 +224,9 @@
         });
 
         if (dictionary[document.title]) document.title = dictionary[document.title];
+        if (document.title.startsWith('Write... —')) {
+            document.title = document.title.replace('Write...', 'Escrever...');
+        }
     }
 
     document.querySelectorAll('[data-language-select]').forEach((select) => {

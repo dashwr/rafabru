@@ -40,12 +40,14 @@ jobs:
         with:
           php-version: '8.3'
           coverage: none
+          extensions: pdo_sqlite, sqlite3, mbstring, curl
 
       - name: Validate application files
         shell: bash
         run: |
           set -euo pipefail
           find app public scripts config -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find public/assets/js -type f -name '*.js' -print0 | xargs -0 -n1 node --check
           php -r '
           foreach (glob("storage/templates/*.json") as $file) {
               json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
@@ -146,7 +148,7 @@ jobs:
           retry rsync -az --delete -e ssh \
             .deploy-private/ "rafabru-host:$APP_PATH/"
 
-      - name: Validate deployed PHP
+      - name: Validate and migrate deployed application
         shell: bash
         run: |
           set -euo pipefail
@@ -154,17 +156,23 @@ jobs:
             "PHP_BIN=/opt/cpanel/ea-php83/root/usr/bin/php; \
              if [ ! -x \"\$PHP_BIN\" ]; then PHP_BIN=\$(command -v php); fi; \
              \"\$PHP_BIN\" -l '$APP_PATH/app/bootstrap.php'; \
+             \"\$PHP_BIN\" -l '$APP_PATH/app/wall.php'; \
              \"\$PHP_BIN\" -l '$PUBLIC_PATH/index.php'; \
+             \"\$PHP_BIN\" -l '$PUBLIC_PATH/write/index.php'; \
              if [ -f '$DATA_PATH/config.php' ]; then \
-               echo 'Private data is initialized.'; \
+               RAFABRU_CONFIG='$DATA_PATH/config.php' \"\$PHP_BIN\" '$APP_PATH/scripts/migrate-wall.php'; \
+               echo 'Private data and wall storage are initialized.'; \
              else \
                echo 'NOTICE: Run the one-time installer before using the admin login.'; \
              fi"
 
-      - name: Check public page
+      - name: Check public pages and wall API
         shell: bash
         run: |
-          curl --fail --silent --show-error --location \
-            --retry 3 --retry-delay 5 \
-            https://rafabru.duckdns.org/ > /dev/null || \
-            echo 'The files deployed, but the public HTTPS check did not pass yet.'
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 3 --retry-delay 5 \
+            https://rafabru.duckdns.org/ > /dev/null
+          curl --fail --silent --show-error --location --retry 3 --retry-delay 5 \
+            https://rafabru.duckdns.org/write/ > /dev/null
+          curl --fail --silent --show-error --location --retry 3 --retry-delay 5 \
+            https://rafabru.duckdns.org/api/wall/list.php > /dev/null

@@ -1,0 +1,67 @@
+.window {
+    border: 2px solid;
+    border-color: #ffffff #9f8c9a #9f8c9a #ffffff;
+    background: #fffefd;
+}
+
+.titlebar {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 5px 7px 5px 10px;
+    background: linear-gradient(90deg, #d76aa1, #efb6d1);
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-shadow: 1px 1px 0 rgba(81, 71, 93, 0.28);
+}
+
+.titlebar__name {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+}
+
+.titlebar__icon {
+    width: 18px;
+    height: 18px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    background: #ffeaf5;
+    color: #bd4f88;
+    text-shadow: none;
+}
+
+.window-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.window-control {
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border: 2px solid;
+    border-color: #ffffff #9b7d90 #9b7d90 #ffffff;
+    background: #f6d6e5;
+    color: #51475d;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    text-shadow: none;
+}
+
+/* The post-it remains fixed to the pointer while the wall can still scroll. */
+body.is-placing-note {
+    overflow-y: auto !important;
+}
+
+html[lang="pt-BR"] .notebook-flow:empty::before {
+    content: "Comece a escrever aqui...";
+}
