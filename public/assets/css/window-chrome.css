@@ -56,3 +56,12 @@
     line-height: 1;
     text-shadow: none;
 }
+
+/* The post-it remains fixed to the pointer while the wall can still scroll. */
+body.is-placing-note {
+    overflow-y: auto !important;
+}
+
+html[lang="pt-BR"] .notebook-flow:empty::before {
+    content: "Comece a escrever aqui...";
+}
