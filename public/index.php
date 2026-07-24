@@ -5,10 +5,24 @@ declare(strict_types=1);
 require __DIR__ . '/bootstrap.php';
 
 $settings = rafabru_read_json('settings.json', []);
+$migrations = is_array($settings['_migrations'] ?? null) ? $settings['_migrations'] : [];
+$renameMigration = 'rename-site-rafa-bru-v1';
+
+if (!in_array($renameMigration, $migrations, true)) {
+    $storedTitle = trim((string) ($settings['title'] ?? ''));
+    if ($storedTitle === '' || strtolower($storedTitle) === 'our corner') {
+        $settings['title'] = 'rafa & bru';
+    }
+
+    $migrations[] = $renameMigration;
+    $settings['_migrations'] = array_values(array_unique($migrations));
+    rafabru_write_json('settings.json', $settings);
+}
+
 $links = rafabru_sort_records(rafabru_read_json('links.json', []));
 $songs = rafabru_sort_records(rafabru_read_json('songs.json', []));
 
-$title = trim((string) ($settings['title'] ?? 'our corner')) ?: 'our corner';
+$title = trim((string) ($settings['title'] ?? 'rafa & bru')) ?: 'rafa & bru';
 $subtitle = trim((string) ($settings['subtitle'] ?? 'welcome')) ?: 'welcome';
 $footerBefore = (string) ($settings['footer']['before'] ?? 'made with ');
 $footerAccent = (string) ($settings['footer']['accent'] ?? 'love');
@@ -81,19 +95,20 @@ $icons = [
                 </span>
             </header>
 
-            <nav class="toolbar" aria-label="Decorative application menu">
+            <nav class="toolbar" aria-label="Application menu">
                 <span>File</span>
                 <span>Links</span>
                 <span>Music</span>
+                <a class="toolbar-login" href="/admin/">login</a>
             </nav>
 
             <div class="content">
                 <header class="hero">
                     <img
                         class="hero-mascot"
-                        src="/assets/images/cinnamoroll.svg"
-                        width="500"
-                        height="600"
+                        src="/assets/images/cinnamoroll.png"
+                        width="250"
+                        height="300"
                         alt=""
                         decoding="async"
                     >
@@ -171,7 +186,7 @@ $icons = [
                     <span class="window-controls" aria-hidden="true"><span class="window-control">×</span></span>
                 </header>
                 <div class="music-dialog__body">
-                    <p>Would you like to play the music for our corner?</p>
+                    <p>Would you like to play the music for <?= rafabru_h($title) ?>?</p>
                     <div class="music-dialog__actions">
                         <button class="retro-button" type="button" data-music-accept>play music</button>
                         <button class="retro-button" type="button" data-music-decline>not now</button>

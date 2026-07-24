@@ -1,0 +1,99 @@
+/* Shared Windows 95/98-inspired typography and controls. */
+:root,
+html,
+body,
+button,
+input,
+select,
+textarea {
+    font-family: "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Geneva, Arial, sans-serif !important;
+}
+
+h1,
+h2,
+h3,
+p,
+a,
+span,
+label,
+strong,
+small {
+    font-family: inherit;
+}
+
+.hero h1 {
+    font-family: "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Geneva, Arial, sans-serif !important;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-shadow: 1px 1px 0 #fff;
+}
+
+.subtitle {
+    font-family: "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Geneva, Arial, sans-serif !important;
+}
+
+.toolbar-login {
+    margin-left: auto;
+    display: inline-flex;
+    min-width: 68px;
+    min-height: 26px;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 10px;
+    border: 2px solid;
+    border-color: #fff #9f8c9a #9f8c9a #fff;
+    background: #f7ddeb;
+    color: var(--ink, #51475d);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    box-shadow: 1px 1px 0 rgba(81, 71, 93, 0.14);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.toolbar-login:hover,
+.toolbar-login:focus-visible {
+    background: #eaf6ff;
+    outline: 1px dotted #51475d;
+    outline-offset: -4px;
+}
+
+.toolbar-login:active {
+    border-color: #9f8c9a #fff #fff #9f8c9a;
+    transform: translate(1px, 1px);
+}
+
+.hero-mascot {
+    object-fit: contain;
+}
+
+.login-window .titlebar > span:first-child,
+.admin-shell > .titlebar > span:first-child {
+    font-size: 0;
+}
+
+.login-window .titlebar > span:first-child::after,
+.admin-shell > .titlebar > span:first-child::after {
+    content: "♡ rafa & bru control panel";
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+@media (max-width: 520px) {
+    .toolbar {
+        align-items: center;
+        gap: 6px;
+    }
+
+    .toolbar-login {
+        min-width: 62px;
+        min-height: 34px;
+        padding-inline: 8px;
+    }
+
+    .hero h1 {
+        font-size: clamp(2rem, 12vw, 3rem);
+    }
+}
