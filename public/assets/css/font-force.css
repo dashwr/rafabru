@@ -1,0 +1,7 @@
+html,
+body,
+body *,
+body *::before,
+body *::after {
+    font-family: "W95FA", "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Geneva, Arial, sans-serif !important;
+}
