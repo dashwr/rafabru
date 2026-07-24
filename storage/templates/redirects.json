@@ -1,7 +1,1 @@
-{
-  "example": {
-    "destination": "https://example.com",
-    "status": 302,
-    "enabled": false
-  }
-}
+[]
