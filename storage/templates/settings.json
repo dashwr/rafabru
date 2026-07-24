@@ -1,11 +1,15 @@
 {
-  "title": "our little corner",
-  "subtitle": "a tiny place for our favorite links",
-  "footer": "made with care for rafa and bru",
+  "title": "our corner",
+  "subtitle": "welcome",
+  "footer": {
+    "before": "made with ",
+    "accent": "love",
+    "after": " by Sol. 28/10/2024"
+  },
   "music": {
-    "enabled": false,
-    "display_name": "our song",
-    "file": "assets/audio/background.mp3",
-    "loop": true
+    "enabled": true,
+    "show_player": true,
+    "mode": "sequential",
+    "volume": 0.45
   }
 }
