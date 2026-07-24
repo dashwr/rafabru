@@ -13,4 +13,9 @@ return [
     // Generate the hash on the server. Never commit the plain password.
     // php -r "echo password_hash('YOUR_PASSWORD', PASSWORD_DEFAULT), PHP_EOL;"
     'admin_password_hash' => 'REPLACE_WITH_PASSWORD_HASH',
+
+    // Create a Cloudflare Turnstile widget for rafabru.duckdns.org.
+    // The site key is rendered publicly; the secret key must remain private here.
+    'turnstile_site_key' => '',
+    'turnstile_secret_key' => '',
 ];
