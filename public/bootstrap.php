@@ -5,7 +5,7 @@ declare(strict_types=1);
 $candidates = [
     dirname(__DIR__) . '/app/bootstrap.php',
     __DIR__ . '/app/bootstrap.php',
-    '/home1/raf32088/rafabru-app/bootstrap.php',
+    '/home1/raf32088/rafabru-app/app/bootstrap.php',
 ];
 
 foreach ($candidates as $candidate) {
