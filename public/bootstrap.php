@@ -41,14 +41,24 @@ foreach ($wallCandidates as $candidate) {
 $requestPath = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 if (str_starts_with($requestPath, '/admin/')) {
     ob_start(static function (string $html): string {
-        if (!str_contains($html, '</body>') || str_contains($html, '/assets/js/lang.js')) {
-            return $html;
+        if (str_contains($html, '</head>') && !str_contains($html, '/assets/css/admin-wall.css')) {
+            $html = str_replace(
+                '</head>',
+                '    <link rel="stylesheet" href="/assets/css/admin-wall.css?v=1">' . PHP_EOL . '</head>',
+                $html
+            );
         }
 
-        return str_replace(
-            '</body>',
-            '    <script src="/assets/js/lang.js?v=2" defer></script>' . PHP_EOL . '</body>',
-            $html
-        );
+        if (str_contains($html, '</body>') && !str_contains($html, '/assets/js/lang.js')) {
+            $html = str_replace(
+                '</body>',
+                '    <script src="/assets/js/lang.js?v=3" defer></script>' . PHP_EOL
+                . '    <script src="/assets/js/admin-wall.js?v=1" defer></script>' . PHP_EOL
+                . '</body>',
+                $html
+            );
+        }
+
+        return $html;
     });
 }
