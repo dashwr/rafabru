@@ -1,92 +1,73 @@
 # Rafabru site specification
 
-**Status:** planning and initial scaffold
+**Status:** first working implementation in progress
 
 ## Purpose
 
-Rafabru is a very small personal website for Rafa and Bru. Its main job is to keep useful or meaningful links in one calm, private-feeling page without turning into a full CMS or social platform.
+Rafabru is a very small personal website for Rafa and Bru. It keeps meaningful or useful links in one calm page and includes one private administrator panel for maintaining those links, short redirects, and background music.
 
-The live address is planned to be:
+Live address:
 
 ```text
 https://rafabru.duckdns.org
 ```
 
-The application will run on HostGator. GitHub stores the source code; GitHub Pages will not host the live PHP application.
+Repository:
 
-## Core goals
+```text
+dashwr/rafabru
+```
 
-- One public page containing editable link buttons.
-- One separate administrator login.
-- A tiny administrator panel for editing links, page text, music settings, and redirects.
-- Friendly short redirects such as `/playlist` or `/photos`.
-- Background music from a local MP3 file.
-- A calming, light-pink, Windows 98-inspired interface.
-- Cinnamoroll-like colors and motifs are welcome when used softly.
-- Minimal dependencies and minimal maintenance.
+The application runs on HostGator with PHP 8.3. GitHub stores the source code; GitHub Pages does not run the live PHP application.
 
-## Explicit non-goals
+## Confirmed public content
 
-The first version will not include:
+```text
+Title: our corner
+Subtitle: welcome
+Footer: made with love by Sol. 28/10/2024
+```
 
-- Public accounts or registration.
-- Multiple administrators or roles.
-- A page builder.
-- Analytics dashboards.
-- Comments, messages, chat, or social feeds.
-- A MySQL database.
-- A JavaScript framework.
-- Integration with the Projeto Ideal application.
-- Complex media management.
-- Drag-and-drop editing unless it proves genuinely necessary later.
+The word `love` uses the pink accent color while the rest of the footer uses the normal muted text color.
+
+There are no initial public buttons. When no enabled buttons exist, the page shows a gentle empty-state message explaining that nothing is pinned yet.
 
 ## Visual direction
 
-The interface should feel like a small personal desktop from an older computer rather than a modern link-in-bio template.
+The site should feel like a small personal Windows 95/98 program rather than a modern link-in-bio template.
 
-### Main style
+Confirmed visual direction:
 
-- Pale pink desktop background.
-- White and very light blue cloud details.
-- Windows 95/98-style title bars, beveled borders, and rectangular controls.
-- Soft pink window chrome rather than harsh gray.
-- Notebook-paper, stationery, floppy disk, folder, CD, heart, bow, star, and cloud motifs.
-- Low visual density and generous breathing room.
-- Very little animation.
-- Mobile-friendly without losing the desktop-window illusion.
+- Light pink desktop background.
+- Pink Windows-style title bars and beveled controls.
+- White paper/window surfaces.
+- Soft blue used only as a secondary contrast color.
+- Pink cat, bow, heart, flower, stationery, folder, and music motifs.
+- Hello Kitty-inspired atmosphere rather than a light-blue Cinnamoroll-first palette.
+- Low density, calm spacing, and very little animation.
+- Mobile-friendly without losing the retro-window illusion.
+- The supplied pink cat image is intended to be the favicon at `public/assets/images/favicon.png`.
 
-### Suggested palette
-
-```text
-Background pink:  #FFF4FA
-Window pink:      #F2CBDF
-Cloud blue:       #CCE9FF
-Accent blue:      #9DCCF0
-Paper white:      #FFFCFE
-Lavender gray:    #8D899B
-Main text:        #465369
-Soft shadow:      #C9B7C3
-```
-
-These are starting values, not hard requirements.
-
-### Character influence
-
-The first version can evoke a Cinnamoroll-like atmosphere through clouds, pale blue accents, long-ear silhouettes, bows, stars, and soft pink cheeks. Official artwork should only be added from assets intentionally supplied for the project.
+No additional official character artwork is required for version 1.
 
 ## Public page
 
-The public route is `/`.
+Route:
 
-It should contain:
+```text
+/
+```
 
-- A small title and subtitle.
-- A vertical or compact grid list of editable links.
-- An icon for each link selected from a fixed built-in set.
-- An optional short description under a link.
-- A small now-playing area.
-- Play, pause, and mute controls.
-- A tiny footer.
+The public page includes:
+
+- Page title and subtitle.
+- Enabled link buttons in administrator-defined order.
+- Optional link descriptions.
+- A small icon selected for each link.
+- A compact music player.
+- A music-consent dialog when playable songs exist.
+- The confirmed footer.
+- A friendly empty state when no links are enabled.
 
 Each link record contains:
 
@@ -94,68 +75,108 @@ Each link record contains:
 id
 text
 url
-optional description
+description
 icon
 order
 enabled
-open in new tab
+new_tab
 ```
 
 Disabled links are not shown publicly.
 
-## Background music
+## Music and playlist behavior
 
-The selected MP3 will live under `public/assets/audio/` unless a later hosting reason requires another location.
+Songs are uploaded later from the administrator panel. MP3 files are stored in the private writable data directory rather than committed to GitHub.
 
-Because browsers commonly block audible autoplay, the intended behavior is:
+The administrator can:
 
-1. The page loads normally.
-2. A small retro dialog asks whether to play the music.
-3. Music begins only after a visitor interaction.
-4. The preference is remembered in local storage on that browser.
-5. A visible play/pause or mute control remains available.
-6. The track can loop when enabled in settings.
+- Upload MP3 files.
+- Set each song's display title.
+- Enable or disable each song.
+- Move songs up or down to define playlist order.
+- Delete a song and its stored MP3 file.
+- Enable or disable music globally.
+- Show or hide the public player.
+- Choose consecutive or random playback.
+- Set the initial volume.
+
+Playback rules:
+
+- With no enabled playable songs, the public player says `no music available` and its buttons are disabled.
+- With one enabled song, that song loops.
+- In consecutive mode, enabled songs play in the configured order and wrap back to the first song.
+- In random mode, the next enabled song is chosen randomly; when more than one exists, the same song is not chosen twice in a row.
+- Browsers are asked for a visitor interaction before audible playback.
+- The visitor's play/not-now preference is remembered in local storage.
+
+Songs are streamed through:
+
+```text
+/audio.php?id=<song-id>
+```
+
+The real MP3 path remains outside the public web directory.
 
 ## Administrator area
 
-The administrator route is `/admin/`.
+Route:
+
+```text
+/admin/
+```
 
 There is one administrator account and no public registration.
 
-The panel should resemble a small pink Windows Control Panel and contain four compact areas.
+Confirmed username:
+
+```text
+serafim
+```
+
+The password is never committed in plaintext. Production stores only a `password_hash()` value in the private configuration file.
+
+The panel contains four sections.
 
 ### Page settings
 
-- Public title.
-- Subtitle or greeting.
-- Footer text.
-- Music enabled or disabled.
-- Music display name.
-- MP3 path.
-- Loop enabled or disabled.
+- Title.
+- Subtitle.
+- Footer before/accent/after fields.
+- Global music enabled toggle.
+- Public player visibility toggle.
+- Consecutive or random mode.
+- Initial volume.
+
+### Music
+
+- MP3 upload.
+- Display title.
+- Enable/disable.
+- Reorder.
+- Delete.
 
 ### Links
 
-- Add a link.
-- Edit text, URL, description, and icon.
-- Enable or disable a link.
+- Add a button.
+- Edit text, destination, description, and icon.
+- Enable or disable it.
 - Choose whether it opens in a new tab.
 - Move it up or down.
 - Delete it.
 
-A fixed icon set is enough for the first version:
+Built-in icon choices:
 
 ```text
 folder
 heart
 star
-music disc
+music
 photo
 cloud
 letter
 flower
 gift
-custom image
+bow
 ```
 
 ### Redirects
@@ -175,141 +196,92 @@ This creates:
 https://rafabru.duckdns.org/playlist
 ```
 
-Reserved internal slugs will include at least:
-
-```text
-admin
-assets
-index.php
-login
-logout
-api
-```
-
 Redirect requirements:
 
 - Slugs use lowercase letters, numbers, and hyphens.
+- Reserved internal routes cannot be used.
 - Destinations must be valid HTTP or HTTPS URLs.
-- `302` is the default because personal links may change.
-- `301` may be selectable when intentionally permanent.
-- Disabled or missing redirects return a normal 404 page.
-- Redirect lookup should happen in PHP; the admin panel must not rewrite `.htaccess` for every edit.
-
-### Session controls
-
-- Logout.
-- Session timeout after inactivity.
-- Clear success and validation messages.
+- `302` is the default.
+- `301` can be selected intentionally.
+- Disabled or missing redirects produce the site's small 404 screen.
 
 ## Technical architecture
 
-The intended stack is deliberately small:
+The stack is deliberately small:
 
 - PHP 8.3.
 - HTML and CSS.
-- Small amounts of vanilla JavaScript.
-- JSON files for mutable content.
+- Vanilla JavaScript.
+- JSON files for editable content.
 - PHP sessions for authentication.
-- Apache `.htaccess` for routing and basic protections.
-- No Composer package unless a real need appears.
+- Apache `.htaccess` for HTTPS, routing, and basic protections.
 - No database.
+- No JavaScript framework.
+- No Composer dependency for version 1.
 
-### Data separation
+## Data separation
 
-Application code is deployed from GitHub into the public web directory.
+Public application document root:
 
-Production data should live outside `public_html`, approximately:
+```text
+/home1/raf32088/public_html/rafabru/
+```
+
+Private writable data:
 
 ```text
 /home1/raf32088/rafabru-data/
 ├── config.php
 ├── settings.json
 ├── links.json
-└── redirects.json
+├── redirects.json
+├── songs.json
+└── audio/
+    └── uploaded-song-files.mp3
 ```
 
-This keeps passwords and editable data outside the public directory and prevents a GitHub deployment from overwriting changes made in the admin panel.
+GitHub deployments update application code only. They must never overwrite the production JSON files or uploaded songs.
 
-Default/template JSON files may remain in the repository under `storage/templates/`, but they are not the live production files.
+## Security requirements
 
-## Minimum security requirements
-
-Even though this is a personal site, the administrator area must include:
-
-- Passwords stored only as `password_hash()` output.
-- No plaintext password in GitHub.
-- PHP session regeneration after successful login.
-- CSRF protection for create, update, and delete actions.
-- File locking and atomic writes for JSON data.
-- Escaping of all displayed user-editable text.
-- Validation of URLs and redirect slugs.
-- A small delay or basic throttling after failed logins.
-- Secure, HTTP-only session cookies when HTTPS is active.
+- Production password stored only as a PHP password hash.
+- Session ID regeneration after login.
+- Secure and HTTP-only session cookies over HTTPS.
+- Session inactivity timeout.
+- CSRF tokens on all administrator writes.
+- Small delay after failed login attempts.
+- URL and redirect-slug validation.
+- MP3 extension, MIME, and size checks.
+- Random server-side filenames for uploaded songs.
+- JSON writes through temporary files and atomic replacement.
+- Escaping of all public and administrator text.
 - No directory listing.
-- Search-engine exclusion for the administrator pages.
+- Administrator pages excluded from search engines.
 
-## Repository and deployment boundary
+## Explicit non-goals
 
-Repository:
+Version 1 does not include:
 
-```text
-dashwr/rafabru
-```
+- Public accounts.
+- Multiple administrators or roles.
+- MySQL.
+- Analytics.
+- A page builder.
+- Comments, chat, or social feeds.
+- A complex media library.
+- Integration with Projeto Ideal.
+- Shared code, data, credentials, or deployment with `brunoupmidia/projetoideal-revamp`.
 
-Expected HostGator document root:
+## Version 1 acceptance criteria
 
-```text
-/home1/raf32088/public_html/rafabru/
-```
-
-Expected private data directory:
-
-```text
-/home1/raf32088/rafabru-data/
-```
-
-This project must remain independent from:
-
-```text
-brunoupmidia/projetoideal-revamp
-```
-
-No code, database, deployment workflow, secrets, or writable data should be shared between them.
-
-## Deployment model
-
-The planned deployment flow is:
-
-```text
-push to main
-→ GitHub Actions
-→ SSH/SFTP or rsync to HostGator
-→ deploy public application files
-→ leave /home1/raf32088/rafabru-data untouched
-```
-
-The deployment workflow will be added only after the final HostGator document root and secret values are confirmed.
-
-## Initial acceptance criteria
-
-Version 1 is complete when:
-
-- The DuckDNS domain loads over HTTPS.
-- The public page is responsive and visually matches the agreed retro pastel direction.
-- Music can be started, paused, muted, and remembered by the browser.
+- `https://rafabru.duckdns.org` loads with valid HTTPS.
+- The public page matches the pink retro direction.
+- The confirmed title, subtitle, and footer appear correctly.
+- The page handles an empty link list gracefully.
+- The music player accurately reports whether playable songs exist.
+- Uploaded songs can be enabled, ordered, disabled, and deleted.
+- Consecutive and random playback work.
 - The administrator can log in and log out.
-- The administrator can add, edit, reorder, disable, and delete links.
-- The administrator can edit the main page text.
-- The administrator can create, edit, disable, and delete redirects.
-- Invalid URLs and duplicate slugs are rejected clearly.
-- JSON writes do not corrupt existing data.
-- Redeploying the GitHub code does not overwrite production content.
-
-## Items to decide before final build
-
-- Final public title and subtitle.
-- Final administrator username.
-- Final MP3 and its display name.
-- Whether links open in the same tab by default.
-- Whether the public page needs a tiny private/about section.
-- Exact HostGator document root shown in cPanel after the domain mapping is complete.
+- Links and redirects can be created, edited, disabled, and deleted.
+- Invalid destinations and duplicate redirect slugs are rejected.
+- A deployment does not erase production content or music.
