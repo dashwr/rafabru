@@ -7,7 +7,12 @@ config/config.local.php
 
 # Production or local mutable data
 storage/data/
+storage/runtime/
 *.log
+
+# Uploaded media and deployment artifacts
+*.mp3
+.deploy/
 
 # SSH and credential files
 *.pem
