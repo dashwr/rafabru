@@ -1,0 +1,12 @@
+[
+  {
+    "id": "welcome-link",
+    "text": "our first link",
+    "url": "https://example.com",
+    "description": "replace this from the admin panel",
+    "icon": "heart",
+    "order": 1,
+    "enabled": false,
+    "new_tab": true
+  }
+]
