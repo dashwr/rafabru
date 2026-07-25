@@ -16,6 +16,39 @@ if (!is_string($source)) {
 
 $replacements = [
     <<<'SEARCH'
+        const result = pages.slice(0, MAX_PAGES).map((page) => normalizeText(page));
+SEARCH
+    => <<<'REPLACE'
+        const expandedPages = [];
+        pages.slice(0, MAX_PAGES).forEach((page) => {
+            const normalizedPage = normalizeText(page);
+            if (normalizedPage.includes('⟦RAFABRU_PAGE_BREAK⟧')) {
+                expandedPages.push(...normalizedPage.split(/\s*⟦RAFABRU_PAGE_BREAK⟧\s*/g));
+            } else {
+                expandedPages.push(normalizedPage);
+            }
+        });
+        const result = expandedPages.slice(0, MAX_PAGES);
+REPLACE,
+    <<<'SEARCH'
+    const decodeBody = (body) => {
+        const normalized = normalizeText(body);
+        if (normalized.includes(PAGE_SEPARATOR)) {
+            return ensureEvenPages(normalized.split(PAGE_SEPARATOR));
+        }
+        return paginatePlainText(normalized);
+    };
+SEARCH
+    => <<<'REPLACE'
+    const decodeBody = (body) => {
+        const normalized = normalizeText(body);
+        if (normalized.includes('⟦RAFABRU_PAGE_BREAK⟧')) {
+            return ensureEvenPages(normalized.split(/\s*⟦RAFABRU_PAGE_BREAK⟧\s*/g));
+        }
+        return paginatePlainText(normalized);
+    };
+REPLACE,
+    <<<'SEARCH'
         placementPostit.classList.add(`postit-color--${values.color}`);
 
         state.placing = true;
@@ -33,20 +66,6 @@ SEARCH
     => <<<'REPLACE'
         placementPostit.style.left = `${Math.max(8, window.innerWidth / 2 - 107)}px`;
         placementPostit.style.top = `${Math.max(130, window.innerHeight / 2 - 95)}px`;
-REPLACE,
-    <<<'SEARCH'
-    document.addEventListener('pointermove', (event) => {
-        if (!state.placing || state.savingPlacement) return;
-        placementPostit.style.left = `${event.clientX}px`;
-        placementPostit.style.top = `${event.clientY}px`;
-    });
-SEARCH
-    => <<<'REPLACE'
-    document.addEventListener('pointermove', (event) => {
-        if (!state.placing || state.savingPlacement) return;
-        placementPostit.style.left = `${event.clientX}px`;
-        placementPostit.style.top = `${event.clientY}px`;
-    });
 REPLACE,
     <<<'SEARCH'
         const wallRect = wall.getBoundingClientRect();
@@ -75,7 +94,7 @@ REPLACE,
 foreach ($replacements as $search => $replacement) {
     if (!str_contains($source, $search)) {
         http_response_code(500);
-        echo "console.error('The writing-wall placement patch no longer matches its source file.');\n";
+        echo "console.error('The writing-wall patch no longer matches its source file.');\n";
         exit;
     }
     $source = str_replace($search, $replacement, $source);

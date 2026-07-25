@@ -1,0 +1,105 @@
+/* Consolidated fixes for notebook controls, note movement, and checklist completion. */
+.create-box:active {
+    transform: translateX(-50%) !important;
+}
+
+.wall-identity {
+    top: 154px !important;
+}
+
+.notebook-navigation,
+.notebook-navigation--checklist {
+    display: grid !important;
+    grid-template-columns: 48px 190px minmax(220px, 1fr) 48px !important;
+    align-items: center;
+    gap: 8px;
+    width: 790px !important;
+}
+
+.notebook-navigation [data-page-previous] {
+    grid-column: 1;
+}
+
+.notebook-navigation .note-type-switch {
+    grid-column: 2;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-width: 0;
+    min-height: 38px;
+    margin: 0 !important;
+    padding: 0 10px;
+    border: 1px solid rgba(117, 74, 95, 0.32);
+    background: rgba(255, 247, 251, 0.26);
+    color: #654b5a;
+    white-space: nowrap;
+}
+
+.note-type-switch label {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 5px;
+    min-height: 30px !important;
+    cursor: pointer;
+}
+
+.note-type-switch input {
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
+    margin: 0;
+}
+
+.notebook-navigation [data-page-counter] {
+    grid-column: 3;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.notebook-navigation [data-page-next] {
+    grid-column: 4;
+}
+
+.wall-note-move-control {
+    position: absolute;
+    z-index: 7200;
+    width: 29px;
+    height: 27px;
+    padding: 0;
+    transform: translate(178px, -12px);
+    color: #624858;
+    background: #f4dce8;
+    cursor: move;
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+.wall-note-move-control:hover,
+.wall-note-move-control:focus-visible {
+    background: #fff6fb;
+    outline: 1px dotted #6c4b5d;
+    outline-offset: -4px;
+}
+
+.wall-postit.is-being-moved {
+    opacity: 0.92 !important;
+    outline: 2px dashed #8e4d72 !important;
+    outline-offset: 5px;
+    pointer-events: none;
+}
+
+.checklist-editor__row input[type="checkbox"]:checked + input[type="text"],
+.wall-detail-check-row input[type="checkbox"]:checked + input[type="text"] {
+    color: #8f7c87;
+    opacity: 0.68;
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wall-postit,
+    .wall-note-move-control {
+        transition: none !important;
+    }
+}
