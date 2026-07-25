@@ -1,0 +1,166 @@
+/* Explicit read-only and owner-edit states for published notes. */
+.published-note-layer {
+    position: fixed;
+    z-index: 27000;
+    inset: 0;
+    display: grid;
+    padding: 34px;
+    place-items: center;
+    background: rgba(60, 42, 51, 0.48);
+}
+
+.published-note-layer[hidden] {
+    display: none !important;
+}
+
+.published-note-window {
+    width: min(820px, calc(100vw - 60px));
+    max-height: calc(100vh - 60px);
+    overflow: hidden;
+    background: #efe6eb;
+    box-shadow: 11px 14px 0 rgba(38, 25, 32, 0.28);
+}
+
+.published-note-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.published-note-body {
+    max-height: calc(100vh - 145px);
+    overflow: auto;
+    padding: 20px;
+    background: #fff8fc;
+}
+
+.published-note-heading {
+    margin: 0;
+    color: #604756;
+    font-size: 1.25rem;
+}
+
+.published-note-meta {
+    margin: 5px 0 16px;
+    color: #876d7c;
+}
+
+.published-writing-paper,
+.published-writing-editor,
+.published-checklist {
+    width: 100%;
+    min-height: 430px;
+    border: 2px solid;
+    border-color: #887a82 #fff #fff #887a82;
+    background:
+        linear-gradient(90deg, transparent 0 43px, rgba(221, 111, 145, 0.52) 43px 45px, transparent 45px),
+        repeating-linear-gradient(to bottom, transparent 0 23px, rgba(222, 131, 159, 0.47) 23px 24px),
+        #f7ecd1;
+    color: #50434b;
+}
+
+.published-writing-paper {
+    padding: 27px 29px 30px 58px;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    font-size: 16px;
+    line-height: 24px;
+}
+
+.published-writing-editor {
+    padding: 27px 29px 30px 58px;
+    resize: vertical;
+    outline: 0;
+    font: inherit;
+    font-size: 16px;
+    line-height: 24px;
+}
+
+.published-note-title-input {
+    width: 100%;
+    min-height: 36px;
+    margin-bottom: 14px;
+    padding: 6px 8px;
+    border: 2px solid;
+    border-color: #776d73 #fff #fff #776d73;
+    background: #fff;
+    color: #4d4249;
+    font: inherit;
+    font-size: 1.1rem;
+}
+
+.published-checklist {
+    padding: 25px 38px 42px 58px;
+}
+
+.published-checklist__row {
+    display: grid;
+    grid-template-columns: 19px minmax(0, 1fr);
+    gap: 9px;
+    align-items: center;
+    min-height: 32px;
+}
+
+.published-checklist__row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #c86f99;
+}
+
+.published-checklist__row span,
+.published-checklist__row input[type="text"] {
+    min-width: 0;
+    color: #50434b;
+    font: inherit;
+    line-height: 31px;
+}
+
+.published-checklist__row input[type="text"] {
+    width: 100%;
+    height: 31px;
+    padding: 2px 3px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+}
+
+.published-checklist__row input[type="text"]:focus {
+    background: rgba(255, 255, 255, 0.17);
+    outline: 1px dotted #9d557b;
+}
+
+.published-checklist__row.is-checked span,
+.published-checklist__row.is-checked input[type="text"] {
+    color: #8f7c87;
+    opacity: 0.7;
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+
+.published-note-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    margin-top: 16px;
+}
+
+.published-note-status {
+    min-height: 22px;
+    margin: 0;
+    padding: 0 20px 14px;
+    color: #8a4467;
+    background: #fff8fc;
+}
+
+.published-note-empty {
+    margin: 0;
+    color: #8a7480;
+}
+
+.checklist-editor__row.is-checked input[type="text"] {
+    color: #8f7c87;
+    opacity: 0.7;
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
