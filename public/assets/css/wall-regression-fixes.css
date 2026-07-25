@@ -1,0 +1,36 @@
+/* Focused fixes for wall controls, notebook note types, and checklist completion. */
+.create-box:active {
+    transform: translateX(-50%) translate(1px, 1px) !important;
+}
+
+.notebook-navigation {
+    grid-template-columns: 188px 48px minmax(180px, 1fr) 48px !important;
+    width: 860px !important;
+}
+
+.note-type-switch {
+    display: inline-flex !important;
+    align-self: stretch;
+    justify-content: center;
+    min-width: 176px;
+    margin: 0 8px 0 0 !important;
+    padding: 0 10px;
+    border-right: 1px solid rgba(112, 69, 91, 0.28);
+    background: rgba(255, 247, 251, 0.18);
+}
+
+.note-type-switch label {
+    min-height: 34px;
+}
+
+.notebook-navigation--checklist {
+    grid-template-columns: 188px 48px minmax(180px, 1fr) 48px !important;
+}
+
+.checklist-editor__row input[type="checkbox"]:checked + input[type="text"],
+.wall-detail-check-row input[type="checkbox"]:checked + input[type="text"] {
+    color: #8f7c87;
+    opacity: 0.68;
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}

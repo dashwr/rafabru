@@ -100,7 +100,11 @@
             suppressTrustedClicksUntil = Date.now() + 350;
             press = null;
 
-            if (grabbed) return;
+            if (grabbed) {
+                window.rafabruMoveClickGuard = window.rafabruMoveClickGuard || {ignoreUntil: 0};
+                window.rafabruMoveClickGuard.ignoreUntil = performance.now() + 300;
+                return;
+            }
 
             postit.dataset.rafabruHoldOpen = '1';
             postit.dataset.rafabruAllowOwnedOpen = '1';

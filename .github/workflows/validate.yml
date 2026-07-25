@@ -140,9 +140,15 @@ jobs:
           set -euo pipefail
           export RAFABRU_CONFIG=/tmp/rafabru-ci-config.php
           REQUEST_URI=/write/ php public/write/index.php > /tmp/rafabru-write.html
+          grep -q '/assets/js/wall-move-click-guard.js' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-extras-preload.js' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-extras-fixes.js' /tmp/rafabru-write.html
+          grep -q '/assets/js/wall-hold-move.js?v=2' /tmp/rafabru-write.html
           grep -q '/assets/js/site-audio.js' /tmp/rafabru-write.html
           grep -q '/assets/css/wall-extras.css' /tmp/rafabru-write.html
+          grep -q '/assets/css/wall-regression-fixes.css' /tmp/rafabru-write.html
+          guard_line=$(grep -n '/assets/js/wall-move-click-guard.js' /tmp/rafabru-write.html | cut -d: -f1)
+          preload_line=$(grep -n '/assets/js/wall-extras-preload.js' /tmp/rafabru-write.html | cut -d: -f1)
+          test "$guard_line" -lt "$preload_line"
           REQUEST_URI=/api/site-data.php php public/api/site-data.php > /tmp/rafabru-site-data.json
           php -r 'json_decode(file_get_contents("/tmp/rafabru-site-data.json"), true, 512, JSON_THROW_ON_ERROR);'
