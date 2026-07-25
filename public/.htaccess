@@ -18,6 +18,9 @@ DirectoryIndex index.php
     RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
+    RewriteRule ^assets/css/write-wall\.css$ write-style.php [L]
+    RewriteRule ^assets/js/write-wall\.js$ write-script.php [L]
+
     RewriteRule ^(?:app|config|storage)(?:/|$) - [F,L,NC]
     RewriteRule ^bootstrap\.php$ - [F,L,NC]
 

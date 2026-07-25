@@ -1,22 +1,82 @@
 (() => {
+    'use strict';
+
     const root = document.querySelector('[data-player]');
     if (!root) return;
 
     const t = (text) => window.rafabruI18n?.t(text) || text;
     const playlist = JSON.parse(root.dataset.playlist || '[]');
     const mode = root.dataset.mode === 'random' ? 'random' : 'sequential';
-    const volume = Math.min(1, Math.max(0, Number(root.dataset.volume || 0.45)));
+    const configuredVolume = Math.min(1, Math.max(0, Number(root.dataset.volume || 0.45)));
+    const storedVolume = Number(localStorage.getItem('rafabru_music_volume'));
+    const initialVolume = Number.isFinite(storedVolume) ? Math.min(1, Math.max(0, storedVolume)) : configuredVolume;
     const audio = new Audio();
+    const body = root.querySelector('.music-panel__body');
+    const nowPlaying = root.querySelector('.now-playing');
     const name = root.querySelector('[data-now-playing]');
     const playButton = root.querySelector('[data-play]');
     const nextButton = root.querySelector('[data-next]');
+    const controls = root.querySelector('.player-controls');
     const dialog = document.querySelector('[data-music-dialog]');
     const acceptButton = dialog?.querySelector('[data-music-accept]');
     const declineButton = dialog?.querySelector('[data-music-decline]');
     let index = 0;
 
     audio.preload = 'metadata';
-    audio.volume = volume;
+    audio.volume = initialVolume;
+
+    const formatTime = (seconds) => {
+        if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+        const minutes = Math.floor(seconds / 60);
+        const remainder = Math.floor(seconds % 60).toString().padStart(2, '0');
+        return `${minutes}:${remainder}`;
+    };
+
+    const progress = document.createElement('input');
+    progress.className = 'player-range player-progress';
+    progress.type = 'range';
+    progress.min = '0';
+    progress.max = '1000';
+    progress.value = '0';
+    progress.disabled = true;
+    progress.setAttribute('aria-label', 'Song position');
+
+    const time = document.createElement('span');
+    time.className = 'player-time';
+    time.textContent = '0:00 / 0:00';
+
+    const volume = document.createElement('input');
+    volume.className = 'player-range';
+    volume.type = 'range';
+    volume.min = '0';
+    volume.max = '100';
+    volume.step = '1';
+    volume.value = String(Math.round(initialVolume * 100));
+    volume.setAttribute('aria-label', 'Music volume');
+
+    const volumeOutput = document.createElement('output');
+    volumeOutput.textContent = `${volume.value}%`;
+
+    if (body && nowPlaying && controls) {
+        const display = document.createElement('div');
+        display.className = 'player-display';
+
+        const timeline = document.createElement('div');
+        timeline.className = 'player-timeline';
+        timeline.append(progress, time);
+        display.append(nowPlaying, timeline);
+
+        const transport = document.createElement('div');
+        transport.className = 'player-transport';
+
+        const volumeLabel = document.createElement('label');
+        volumeLabel.className = 'player-volume';
+        volumeLabel.innerHTML = '<span class="player-volume__icon" aria-hidden="true">🔊</span>';
+        volumeLabel.append(volume, volumeOutput);
+
+        transport.append(controls, volumeLabel);
+        body.replaceChildren(display, transport);
+    }
 
     const setStatus = (text, translateText = false) => {
         if (name) name.textContent = translateText ? t(text) : text;
@@ -25,13 +85,29 @@
     const setButtons = (enabled) => {
         if (playButton) playButton.disabled = !enabled;
         if (nextButton) nextButton.disabled = !enabled;
+        progress.disabled = !enabled;
+        volume.disabled = !enabled;
+    };
+
+    const updateTime = () => {
+        const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+        const current = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+        progress.value = duration > 0 ? String(Math.round((current / duration) * 1000)) : '0';
+        time.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+    };
+
+    const updatePlayButton = () => {
+        if (!playButton) return;
+        const playing = !audio.paused && !audio.ended;
+        playButton.textContent = playing ? 'Ⅱ' : '▶';
+        playButton.setAttribute('aria-label', t(playing ? 'Pause music' : 'Play music'));
     };
 
     const chooseRandomIndex = () => {
         if (playlist.length <= 1) return 0;
-        let next = index;
-        while (next === index) next = Math.floor(Math.random() * playlist.length);
-        return next;
+        let nextIndex = index;
+        while (nextIndex === index) nextIndex = Math.floor(Math.random() * playlist.length);
+        return nextIndex;
     };
 
     const loadTrack = (nextIndex) => {
@@ -39,6 +115,8 @@
         index = ((nextIndex % playlist.length) + playlist.length) % playlist.length;
         const track = playlist[index];
         audio.src = track.src;
+        progress.value = '0';
+        time.textContent = '0:00 / 0:00';
         setStatus(track.title || t('untitled song'));
     };
 
@@ -48,22 +126,17 @@
 
         try {
             await audio.play();
-            if (playButton) {
-                playButton.textContent = 'Ⅱ';
-                playButton.setAttribute('aria-label', t('Pause music'));
-            }
+            updatePlayButton();
             localStorage.setItem('rafabru_music_choice', 'play');
-        } catch (error) {
+        } catch (_) {
             setStatus('press play to start', true);
+            updatePlayButton();
         }
     };
 
     const pause = () => {
         audio.pause();
-        if (playButton) {
-            playButton.textContent = '▶';
-            playButton.setAttribute('aria-label', t('Play music'));
-        }
+        updatePlayButton();
     };
 
     const next = async () => {
@@ -71,6 +144,19 @@
         loadTrack(mode === 'random' ? chooseRandomIndex() : index + 1);
         await play();
     };
+
+    volume.addEventListener('input', () => {
+        const nextVolume = Math.min(1, Math.max(0, Number(volume.value) / 100));
+        audio.volume = nextVolume;
+        volumeOutput.textContent = `${volume.value}%`;
+        localStorage.setItem('rafabru_music_volume', String(nextVolume));
+    });
+
+    progress.addEventListener('input', () => {
+        if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+        audio.currentTime = (Number(progress.value) / 1000) * audio.duration;
+        updateTime();
+    });
 
     if (!playlist.length) {
         setStatus('no music available', true);
@@ -88,8 +174,12 @@
     });
 
     nextButton?.addEventListener('click', next);
-
     audio.addEventListener('ended', next);
+    audio.addEventListener('play', updatePlayButton);
+    audio.addEventListener('pause', updatePlayButton);
+    audio.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('durationchange', updateTime);
+    audio.addEventListener('loadedmetadata', updateTime);
     audio.addEventListener('error', () => {
         setStatus('this song could not be played', true);
         pause();
@@ -107,8 +197,5 @@
 
     const savedChoice = localStorage.getItem('rafabru_music_choice');
     if (dialog) dialog.hidden = savedChoice !== null;
-
-    if (savedChoice === 'play') {
-        play();
-    }
+    if (savedChoice === 'play') play();
 })();
