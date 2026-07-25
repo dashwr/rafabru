@@ -1,1 +1,0 @@
-Press and hold an owned note for 420ms to grab it; move the pointer; click once to place it. This file exists only as a deployment-visible marker for the hold interaction revision.
