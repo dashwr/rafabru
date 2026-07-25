@@ -74,13 +74,17 @@ if (str_starts_with($requestPath, '/admin/')) {
     ];
 
     if (in_array($requestPath, $publicChromePaths, true)) {
-        ob_start(static function (string $html): string {
+        $isWritePage = str_starts_with($requestPath, '/write/');
+        ob_start(static function (string $html) use ($isWritePage): string {
             if (str_contains($html, '</head>')) {
                 $styles = [
                     '/assets/css/navigation-polish.css?v=2',
                     '/assets/css/sections.css?v=2',
                     '/assets/css/site-windows.css?v=1',
                 ];
+                if ($isWritePage) {
+                    $styles[] = '/assets/css/wall-extras.css?v=1';
+                }
                 $markup = '';
                 foreach ($styles as $href) {
                     if (!str_contains($html, $href)) {
@@ -89,6 +93,19 @@ if (str_starts_with($requestPath, '/admin/')) {
                 }
                 if ($markup !== '') {
                     $html = str_replace('</head>', $markup . '</head>', $html);
+                }
+
+                if ($isWritePage && !str_contains($html, '/assets/js/wall-extras-preload.js')) {
+                    $needle = '<script src="/assets/js/write-wall.js';
+                    $position = strpos($html, $needle);
+                    if ($position !== false) {
+                        $html = substr_replace(
+                            $html,
+                            '<script src="/assets/js/wall-extras-preload.js?v=1" defer></script>' . PHP_EOL . '    ',
+                            $position,
+                            0
+                        );
+                    }
                 }
             }
 
