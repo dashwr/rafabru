@@ -5,15 +5,6 @@
     if (!root) return;
 
     const t = (text) => window.rafabruI18n?.t(text) || text;
-    const playlist = JSON.parse(root.dataset.playlist || '[]');
-    const mode = root.dataset.mode === 'random' ? 'random' : 'sequential';
-    const configuredVolume = Math.min(1, Math.max(0, Number(root.dataset.volume || 0.45)));
-    const storedVolume = Number(localStorage.getItem('rafabru_music_volume'));
-    const initialVolume = Number.isFinite(storedVolume)
-        ? Math.min(1, Math.max(0, storedVolume))
-        : configuredVolume;
-
-    const audio = new Audio();
     const body = root.querySelector('.music-panel__body');
     const nowPlaying = root.querySelector('.now-playing');
     const label = root.querySelector('.now-playing__label');
@@ -25,14 +16,10 @@
     const acceptButton = dialog?.querySelector('[data-music-accept]');
     const declineButton = dialog?.querySelector('[data-music-decline]');
 
-    let index = 0;
-    let hasStartedPlayback = false;
-    let isSeeking = false;
     let trackNumber = null;
     let trackWindow = null;
-
-    audio.preload = 'metadata';
-    audio.volume = initialVolume;
+    let seeking = false;
+    let attached = false;
 
     const formatTime = (seconds) => {
         if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
@@ -48,7 +35,7 @@
     progress.max = '1000';
     progress.value = '0';
     progress.disabled = true;
-    progress.setAttribute('aria-label', 'Song position');
+    progress.setAttribute('aria-label', t('Song position'));
 
     const time = document.createElement('span');
     time.className = 'player-time';
@@ -60,56 +47,45 @@
     volume.min = '0';
     volume.max = '100';
     volume.step = '1';
-    volume.value = String(Math.round(initialVolume * 100));
-    volume.setAttribute('aria-label', 'Music volume');
+    volume.value = '45';
+    volume.setAttribute('aria-label', t('Music volume'));
 
     const volumeOutput = document.createElement('output');
-    volumeOutput.textContent = `${volume.value}%`;
+    volumeOutput.textContent = '45%';
 
     if (body && nowPlaying && label && name && controls) {
         const display = document.createElement('div');
         display.className = 'player-display';
-
         const bezel = document.createElement('div');
         bezel.className = 'radio-bezel';
-
         const screen = document.createElement('div');
         screen.className = 'radio-screen';
-
         const header = document.createElement('div');
         header.className = 'radio-screen__header';
-
         const stereo = document.createElement('span');
         stereo.className = 'radio-stereo';
         stereo.textContent = 'STEREO';
-
         trackNumber = document.createElement('span');
         trackNumber.className = 'radio-track-number';
-        trackNumber.textContent = 'TRACK 01';
-
+        trackNumber.textContent = 'TRACK --';
         label.classList.add('radio-now-playing-label');
         header.append(label, stereo, trackNumber);
-
         trackWindow = document.createElement('div');
         trackWindow.className = 'radio-track-window';
         trackWindow.append(name);
-
         const timeline = document.createElement('div');
         timeline.className = 'player-timeline';
         timeline.append(progress, time);
-
         screen.append(header, trackWindow, timeline);
         bezel.append(screen);
         display.append(bezel);
 
         const transport = document.createElement('div');
         transport.className = 'player-transport';
-
         const volumeLabel = document.createElement('label');
         volumeLabel.className = 'player-volume';
         volumeLabel.innerHTML = '<span class="player-volume__icon" aria-hidden="true">VOL</span>';
         volumeLabel.append(volume, volumeOutput);
-
         transport.append(controls, volumeLabel);
         body.replaceChildren(display, transport);
     }
@@ -133,161 +109,68 @@
         refreshMarquee();
     };
 
-    const setButtons = (enabled) => {
-        if (playButton) playButton.disabled = !enabled;
-        if (nextButton) nextButton.disabled = !enabled;
-        progress.disabled = !enabled;
-        volume.disabled = !enabled;
+    const attach = (controller) => {
+        if (attached || !controller) return;
+        attached = true;
+
+        const update = (state = controller.snapshot()) => {
+            const track = state.track;
+            if (!track) setStatus('no music available', true);
+            else if (!state.started) setStatus('press play to start', true);
+            else setStatus(track.title || t('untitled song'));
+
+            if (trackNumber) {
+                trackNumber.textContent = track ? `TRACK ${String(state.index + 1).padStart(2, '0')}` : 'TRACK --';
+            }
+            if (!seeking) {
+                progress.value = state.duration > 0
+                    ? String(Math.round((state.currentTime / state.duration) * 1000))
+                    : '0';
+            }
+            time.textContent = `${formatTime(state.currentTime)} / ${formatTime(state.duration)}`;
+            volume.value = String(Math.round(state.volume * 100));
+            volumeOutput.textContent = `${Math.round(state.volume * 100)}%`;
+
+            if (playButton) {
+                playButton.disabled = !track;
+                playButton.textContent = state.playing ? 'Ⅱ' : '▶';
+                playButton.setAttribute('aria-label', t(state.playing ? 'Pause music' : 'Play music'));
+            }
+            if (nextButton) nextButton.disabled = !track;
+            progress.disabled = !track;
+            volume.disabled = !track;
+        };
+
+        playButton?.addEventListener('click', () => controller.toggle());
+        nextButton?.addEventListener('click', () => controller.next());
+        volume.addEventListener('input', () => controller.setVolume(Number(volume.value) / 100));
+        progress.addEventListener('input', () => {
+            seeking = true;
+            const state = controller.snapshot();
+            const previewTime = state.duration > 0 ? (Number(progress.value) / 1000) * state.duration : 0;
+            time.textContent = `${formatTime(previewTime)} / ${formatTime(state.duration)}`;
+        });
+        progress.addEventListener('change', () => {
+            controller.seekRatio(Number(progress.value) / 1000);
+            seeking = false;
+        });
+
+        acceptButton?.addEventListener('click', async () => {
+            if (dialog) dialog.hidden = true;
+            await controller.play();
+        });
+        declineButton?.addEventListener('click', () => {
+            if (dialog) dialog.hidden = true;
+            controller.pause();
+        });
+
+        controller.addEventListener('statechange', (event) => update(event.detail));
+        update();
+
+        const savedChoice = localStorage.getItem('rafabru_music_choice');
+        if (dialog) dialog.hidden = savedChoice !== null || !controller.playlist.length;
     };
 
-    const currentTrack = () => playlist[index] || null;
-
-    const updateTrackNumber = () => {
-        if (!trackNumber) return;
-        trackNumber.textContent = `TRACK ${String(index + 1).padStart(2, '0')}`;
-    };
-
-    const updateDisplayedTrack = () => {
-        const track = currentTrack();
-        if (!track) {
-            setStatus('no music available', true);
-            return;
-        }
-        if (!hasStartedPlayback) {
-            setStatus('press play to start', true);
-            return;
-        }
-        setStatus(track.title || t('untitled song'));
-    };
-
-    const updateTime = () => {
-        const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
-        const current = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
-        if (!isSeeking) {
-            progress.value = duration > 0 ? String(Math.round((current / duration) * 1000)) : '0';
-        }
-        time.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
-    };
-
-    const updatePlayButton = () => {
-        if (!playButton) return;
-        const playing = !audio.paused && !audio.ended;
-        playButton.textContent = playing ? 'Ⅱ' : '▶';
-        playButton.setAttribute('aria-label', t(playing ? 'Pause music' : 'Play music'));
-    };
-
-    const chooseRandomIndex = () => {
-        if (playlist.length <= 1) return 0;
-        let nextIndex = index;
-        while (nextIndex === index) nextIndex = Math.floor(Math.random() * playlist.length);
-        return nextIndex;
-    };
-
-    const loadTrack = (nextIndex) => {
-        if (!playlist.length) return;
-        index = ((nextIndex % playlist.length) + playlist.length) % playlist.length;
-        const track = currentTrack();
-        audio.src = track.src;
-        progress.value = '0';
-        time.textContent = '0:00 / 0:00';
-        updateTrackNumber();
-        updateDisplayedTrack();
-    };
-
-    const play = async () => {
-        if (!playlist.length) return;
-        if (!audio.src) loadTrack(index);
-
-        try {
-            await audio.play();
-            hasStartedPlayback = true;
-            updateDisplayedTrack();
-            updatePlayButton();
-            localStorage.setItem('rafabru_music_choice', 'play');
-        } catch (_) {
-            setStatus('press play to start', true);
-            updatePlayButton();
-        }
-    };
-
-    const pause = () => {
-        audio.pause();
-        updatePlayButton();
-        updateDisplayedTrack();
-    };
-
-    const next = async () => {
-        if (!playlist.length) return;
-        loadTrack(mode === 'random' ? chooseRandomIndex() : index + 1);
-        if (hasStartedPlayback) await play();
-    };
-
-    volume.addEventListener('input', () => {
-        const nextVolume = Math.min(1, Math.max(0, Number(volume.value) / 100));
-        audio.volume = nextVolume;
-        volumeOutput.textContent = `${volume.value}%`;
-        localStorage.setItem('rafabru_music_volume', String(nextVolume));
-    });
-
-    progress.addEventListener('input', () => {
-        if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
-        isSeeking = true;
-        const previewTime = (Number(progress.value) / 1000) * audio.duration;
-        time.textContent = `${formatTime(previewTime)} / ${formatTime(audio.duration)}`;
-    });
-
-    progress.addEventListener('change', () => {
-        if (!Number.isFinite(audio.duration) || audio.duration <= 0) {
-            isSeeking = false;
-            return;
-        }
-        audio.currentTime = (Number(progress.value) / 1000) * audio.duration;
-        isSeeking = false;
-        updateTime();
-    });
-
-    if (!playlist.length) {
-        setStatus('no music available', true);
-        setButtons(false);
-        if (dialog) dialog.hidden = true;
-        return;
-    }
-
-    setButtons(true);
-    loadTrack(0);
-
-    playButton?.addEventListener('click', () => {
-        if (audio.paused) play();
-        else pause();
-    });
-
-    nextButton?.addEventListener('click', next);
-    audio.addEventListener('ended', next);
-    audio.addEventListener('play', () => {
-        hasStartedPlayback = true;
-        updatePlayButton();
-        updateDisplayedTrack();
-    });
-    audio.addEventListener('pause', updatePlayButton);
-    audio.addEventListener('timeupdate', updateTime);
-    audio.addEventListener('durationchange', updateTime);
-    audio.addEventListener('loadedmetadata', updateTime);
-    audio.addEventListener('error', () => {
-        setStatus('this song could not be played', true);
-        pause();
-    });
-
-    acceptButton?.addEventListener('click', async () => {
-        if (dialog) dialog.hidden = true;
-        await play();
-    });
-
-    declineButton?.addEventListener('click', () => {
-        if (dialog) dialog.hidden = true;
-        localStorage.setItem('rafabru_music_choice', 'pause');
-    });
-
-    const savedChoice = localStorage.getItem('rafabru_music_choice');
-    if (dialog) dialog.hidden = savedChoice !== null;
-    if (savedChoice === 'play') play();
+    if (window.rafabruAudio) attach(window.rafabruAudio);
+    else window.addEventListener('rafabru-audio-ready', (event) => attach(event.detail), {once: true});
 })();
