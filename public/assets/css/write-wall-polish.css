@@ -1,0 +1,100 @@
+/* Desktop writing-wall refinements layered after write-wall.css. */
+:root {
+    /* Each column begins after the pink notebook margin and ends before the paper edge. */
+    --paper-padding-x: 54px;
+    --paper-padding-y: 30px;
+    --page-inner-width: 282px;
+    --page-inner-height: 408px;
+    --column-gap: 106px;
+}
+
+.notebook-paper {
+    background:
+        linear-gradient(90deg, transparent 0 42px, rgba(229, 128, 158, 0.54) 42px 44px, transparent 44px),
+        repeating-linear-gradient(to bottom, transparent 0 23px, rgba(230, 143, 170, 0.52) 23px 24px),
+        radial-gradient(circle at 15px 19px, rgba(150, 126, 88, 0.09) 0 1px, transparent 1.4px) 0 0 / 29px 31px,
+        #f7ecd1;
+}
+
+.notebook-flow {
+    top: var(--paper-padding-y);
+    left: var(--paper-padding-x);
+    width: 4550px;
+    height: var(--page-inner-height);
+    font-size: 16px;
+    line-height: 24px;
+    column-gap: var(--column-gap);
+}
+
+/* The note itself is an index card for the notebook: title first, author last. */
+.wall-postit {
+    align-items: stretch;
+    text-align: center;
+}
+
+.wall-postit__title {
+    display: grid;
+    flex: 1;
+    width: 100%;
+    margin: 0;
+    place-items: center;
+    padding: 10px 4px 14px;
+    font-size: 1.32rem;
+    line-height: 1.18;
+    text-align: center;
+}
+
+.wall-postit__preview,
+.designer-preview,
+.placement-postit p {
+    display: none !important;
+}
+
+.wall-postit__author {
+    width: 100%;
+    margin-top: auto;
+    text-align: left;
+}
+
+.designer-postit {
+    align-items: stretch;
+}
+
+.designer-title {
+    flex: 1;
+    min-height: 150px;
+    padding: 18px 4px;
+    border-bottom: 0;
+    font-size: 1.42rem;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.designer-author-row {
+    margin-top: auto;
+}
+
+.placement-postit {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+}
+
+.placement-postit strong {
+    display: grid;
+    flex: 1;
+    min-height: 118px;
+    place-items: center;
+    padding: 10px 4px;
+    font-size: 1.32rem;
+    line-height: 1.18;
+}
+
+.placement-postit small {
+    display: block;
+    margin-top: auto;
+    padding-top: 7px;
+    border-top: 1px dashed rgba(79, 62, 72, 0.28);
+    text-align: left;
+}
