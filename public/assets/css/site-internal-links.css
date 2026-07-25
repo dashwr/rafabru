@@ -1,0 +1,19 @@
+/* Internal pages shown inside the Links popup. */
+.redirect-shortcut--internal {
+    color: #39566f;
+    background: #dceefa;
+    border-color: #f8fdff #7a93a6 #7a93a6 #f8fdff;
+    box-shadow: 3px 4px 0 rgba(55, 82, 104, 0.16);
+}
+
+.redirect-shortcut--internal::before {
+    content: "▣";
+    color: #547fa1;
+}
+
+.redirect-shortcut--internal:hover,
+.redirect-shortcut--internal:focus-visible {
+    color: #274b67;
+    background: #c8e6f8;
+    outline-color: #426b8a;
+}
