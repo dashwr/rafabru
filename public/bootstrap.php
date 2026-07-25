@@ -61,4 +61,37 @@ if (str_starts_with($requestPath, '/admin/')) {
 
         return $html;
     });
+} else {
+    $publicChromePaths = [
+        '/',
+        '/index.php',
+        '/write/',
+        '/write/index.php',
+        '/music/',
+        '/music/index.php',
+        '/links/',
+        '/links/index.php',
+    ];
+
+    if (in_array($requestPath, $publicChromePaths, true)) {
+        ob_start(static function (string $html): string {
+            if (str_contains($html, '</head>') && !str_contains($html, '/assets/css/navigation-polish.css')) {
+                $html = str_replace(
+                    '</head>',
+                    '    <link rel="stylesheet" href="/assets/css/navigation-polish.css?v=1">' . PHP_EOL . '</head>',
+                    $html
+                );
+            }
+
+            if (str_contains($html, '</body>') && !str_contains($html, '/assets/js/site-chrome.js')) {
+                $html = str_replace(
+                    '</body>',
+                    '    <script src="/assets/js/site-chrome.js?v=1" defer></script>' . PHP_EOL . '</body>',
+                    $html
+                );
+            }
+
+            return $html;
+        });
+    }
 }
