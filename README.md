@@ -1,6 +1,6 @@
 # rafabru
 
-A tiny pink personal links page with one admin login, short redirects, and an editable MP3 playlist.
+site pessoal com capacidades criativas feito inteiramente com GPT 5.6 e focado em ser grátis até onde dá.
 
 - [`SITE_SPEC.md`](SITE_SPEC.md)
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
