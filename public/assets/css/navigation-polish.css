@@ -1,0 +1,77 @@
+/* Shared public navigation refinements. */
+.toolbar--centered {
+    display: flex !important;
+    grid-template-columns: none !important;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+}
+
+.toolbar-balance {
+    display: none !important;
+}
+
+.toolbar-nav {
+    display: inline-flex;
+    grid-column: auto !important;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 19px;
+    margin-right: auto;
+    white-space: nowrap;
+}
+
+.toolbar-actions {
+    grid-column: auto !important;
+    justify-self: auto !important;
+    margin-left: auto;
+}
+
+.toolbar-menu-link {
+    position: relative;
+}
+
+.toolbar-menu-link--write {
+    color: #9e6088;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.62);
+}
+
+.toolbar-menu-link--write:hover,
+.toolbar-menu-link--write:focus-visible,
+.toolbar-menu-link--write.toolbar-menu-link--active {
+    color: #b14f83;
+}
+
+.write-label {
+    display: inline-flex;
+    align-items: baseline;
+}
+
+.write-letter {
+    display: inline-block;
+    animation: write-letter-hop 1.75s steps(2, end) infinite;
+    animation-delay: calc(var(--write-letter-index, 0) * 62ms);
+    will-change: transform;
+}
+
+@keyframes write-letter-hop {
+    0%, 68%, 100% { transform: translateY(0); }
+    76% { transform: translateY(-2px); }
+    84% { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .write-letter {
+        animation: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .toolbar--centered {
+        align-items: flex-start;
+    }
+
+    .toolbar-nav {
+        justify-content: flex-start;
+    }
+}
