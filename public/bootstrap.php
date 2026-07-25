@@ -101,7 +101,9 @@ if (str_starts_with($requestPath, '/admin/')) {
                     if ($position !== false) {
                         $html = substr_replace(
                             $html,
-                            '<script src="/assets/js/wall-extras-preload.js?v=1" defer></script>' . PHP_EOL . '    ',
+                            '<script src="/assets/js/wall-extras-preload.js?v=1" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/wall-title-guard.js?v=1" defer></script>' . PHP_EOL
+                            . '    ',
                             $position,
                             0
                         );
