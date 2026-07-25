@@ -80,11 +80,12 @@ if (str_starts_with($requestPath, '/admin/')) {
                 $styles = [
                     '/assets/css/navigation-polish.css?v=2',
                     '/assets/css/sections.css?v=2',
-                    '/assets/css/site-windows.css?v=1',
+                    '/assets/css/site-windows.css?v=2',
                 ];
                 if ($isWritePage) {
                     $styles[] = '/assets/css/wall-extras.css?v=2';
                     $styles[] = '/assets/css/wall-core-repair.css?v=3';
+                    $styles[] = '/assets/css/published-notes.css?v=1';
                 }
                 $markup = '';
                 foreach ($styles as $href) {
@@ -102,7 +103,9 @@ if (str_starts_with($requestPath, '/admin/')) {
                     if ($position !== false) {
                         $html = substr_replace(
                             $html,
-                            '<script src="/assets/js/wall-extras-preload.js?v=2" defer></script>' . PHP_EOL
+                            '<script src="/assets/js/published-note-state.js?v=1" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/wall-extras-preload.js?v=2" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/draft-checklist-repair.js?v=1" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/wall-core-repair.js?v=2" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/wall-title-guard.js?v=1" defer></script>' . PHP_EOL
                             . '    ',
@@ -117,7 +120,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                 $scripts = [
                     '/assets/js/site-audio.js?v=1',
                     '/assets/js/site-chrome.js?v=2',
-                    '/assets/js/site-windows.js?v=1',
+                    '/assets/js/site-windows.js?v=2',
                     '/assets/js/sections-i18n.js?v=1',
                 ];
                 $markup = '';
