@@ -143,10 +143,10 @@ jobs:
           export RAFABRU_CONFIG=/tmp/rafabru-ci-config.php
           REQUEST_URI=/write/ php public/write/index.php > /tmp/rafabru-write.html
           grep -q '/assets/js/wall-extras-preload.js?v=2' /tmp/rafabru-write.html
-          grep -q '/assets/js/wall-core-repair.js?v=1' /tmp/rafabru-write.html
+          grep -q '/assets/js/wall-core-repair.js?v=2' /tmp/rafabru-write.html
           grep -q '/assets/js/site-audio.js' /tmp/rafabru-write.html
           grep -q '/assets/css/wall-extras.css?v=2' /tmp/rafabru-write.html
-          grep -q '/assets/css/wall-core-repair.css?v=1' /tmp/rafabru-write.html
+          grep -q '/assets/css/wall-core-repair.css?v=2' /tmp/rafabru-write.html
           ! grep -q '/assets/js/wall-hold-move.js' /tmp/rafabru-write.html
           ! grep -q '/assets/js/wall-move-click-guard.js' /tmp/rafabru-write.html
           ! grep -q '/assets/js/wall-extras-fixes.js' /tmp/rafabru-write.html
