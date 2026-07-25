@@ -40,6 +40,18 @@ foreach ($wallCandidates as $candidate) {
 
 $requestPath = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
 if (str_starts_with($requestPath, '/admin/')) {
+    $preflightCandidates = [
+        dirname(__DIR__) . '/app/admin-preflight.php',
+        __DIR__ . '/app/admin-preflight.php',
+        '/home1/raf32088/rafabru-app/app/admin-preflight.php',
+    ];
+    foreach ($preflightCandidates as $candidate) {
+        if (is_file($candidate)) {
+            require_once $candidate;
+            break;
+        }
+    }
+
     ob_start(static function (string $html): string {
         if (str_contains($html, '</head>') && !str_contains($html, '/assets/css/admin-wall.css')) {
             $html = str_replace(
@@ -49,14 +61,21 @@ if (str_starts_with($requestPath, '/admin/')) {
             );
         }
 
-        if (str_contains($html, '</body>') && !str_contains($html, '/assets/js/lang.js')) {
-            $html = str_replace(
-                '</body>',
-                '    <script src="/assets/js/lang.js?v=3" defer></script>' . PHP_EOL
-                . '    <script src="/assets/js/admin-wall.js?v=1" defer></script>' . PHP_EOL
-                . '</body>',
-                $html
-            );
+        if (str_contains($html, '</body>')) {
+            $scripts = [
+                '/assets/js/lang.js?v=3',
+                '/assets/js/admin-wall.js?v=1',
+                '/assets/js/admin-order-fix.js?v=1',
+            ];
+            $markup = '';
+            foreach ($scripts as $src) {
+                if (!str_contains($html, $src)) {
+                    $markup .= '    <script src="' . $src . '" defer></script>' . PHP_EOL;
+                }
+            }
+            if ($markup !== '') {
+                $html = str_replace('</body>', $markup . '</body>', $html);
+            }
         }
 
         return $html;
@@ -81,6 +100,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                     '/assets/css/navigation-polish.css?v=2',
                     '/assets/css/sections.css?v=2',
                     '/assets/css/site-windows.css?v=2',
+                    '/assets/css/site-internal-links.css?v=1',
                 ];
                 if ($isWritePage) {
                     $styles[] = '/assets/css/wall-extras.css?v=2';
@@ -121,6 +141,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                     '/assets/js/site-audio.js?v=1',
                     '/assets/js/site-chrome.js?v=2',
                     '/assets/js/site-windows.js?v=2',
+                    '/assets/js/site-internal-links.js?v=1',
                     '/assets/js/sections-i18n.js?v=1',
                 ];
                 $markup = '';
