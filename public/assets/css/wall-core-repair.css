@@ -70,7 +70,7 @@
     transform: translate(178px, -12px);
     color: #624858;
     background: #f4dce8;
-    cursor: move;
+    cursor: move !important;
     font-size: 0.95rem;
     line-height: 1;
 }
@@ -83,10 +83,17 @@
 }
 
 .wall-postit.is-being-moved {
+    z-index: 15000 !important;
     opacity: 0.92 !important;
     outline: 2px dashed #8e4d72 !important;
     outline-offset: 5px;
     pointer-events: none;
+    box-shadow: 10px 13px 0 rgba(91, 66, 80, 0.20) !important;
+}
+
+body.is-moving-owned-note,
+body.is-moving-owned-note * {
+    cursor: grabbing !important;
 }
 
 .checklist-editor__row input[type="checkbox"]:checked + input[type="text"],
