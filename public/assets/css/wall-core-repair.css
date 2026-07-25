@@ -96,6 +96,25 @@ body.is-moving-owned-note * {
     cursor: grabbing !important;
 }
 
+/* The notebook viewport is hidden in Check mode. The checklist must therefore
+   participate in normal layout or the notebook shell collapses to its padding. */
+.checklist-editor:not([hidden]) {
+    position: relative !important;
+    inset: auto !important;
+    display: block !important;
+    box-sizing: border-box;
+    width: var(--spread-width);
+    height: var(--page-height);
+    padding: 20px 28px 26px;
+}
+
+.checklist-editor__paper {
+    box-sizing: border-box;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+}
+
 .checklist-editor__row input[type="checkbox"]:checked + input[type="text"],
 .wall-detail-check-row input[type="checkbox"]:checked + input[type="text"] {
     color: #8f7c87;
