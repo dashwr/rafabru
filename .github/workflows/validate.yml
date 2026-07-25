@@ -36,6 +36,9 @@ jobs:
           node --check /tmp/rafabru-write-wall.generated.js
           grep -Fq "expandedPages" /tmp/rafabru-write-wall.generated.js
           grep -Fq "normalized.includes('⟦RAFABRU_PAGE_BREAK⟧')" /tmp/rafabru-write-wall.generated.js
+          grep -Fq "window.rafabruOpenPublishedNote" /tmp/rafabru-write-wall.generated.js
+          grep -Fq "Add at least one checklist item before publishing." public/assets/js/draft-checklist-repair.js
+          grep -Fq "Published checklist" public/assets/js/published-note-state.js
 
       - name: Validate JSON templates
         run: |
@@ -111,6 +114,20 @@ jobs:
               throw new RuntimeException("Checklist completion failed.");
           }
 
+          $check = rafabru_wall_update_note($check["id"], "ci friend", [
+              "title" => "Updated packing list",
+              "checklist" => [
+                  ["text" => "Keys", "checked" => true],
+                  ["text" => "Wallet", "checked" => false],
+                  ["text" => "Charger", "checked" => false],
+                  ["text" => "", "checked" => false],
+                  ["text" => "", "checked" => false],
+              ],
+          ]);
+          if (($check["title"] ?? "") !== "Updated packing list" || count($check["checklist"] ?? []) < 5 || ($check["completed"] ?? true)) {
+              throw new RuntimeException("Checklist owner editing failed.");
+          }
+
           $moved = rafabru_wall_move_note($write["id"], "ci writer", 0.66, 760);
           if (abs(($moved["x"] ?? 0) - 0.66) > 0.001 || ($moved["y"] ?? 0) !== 760) {
               throw new RuntimeException("Owner movement failed.");
@@ -125,6 +142,12 @@ jobs:
           }
 
           try {
+              rafabru_wall_update_note($check["id"], "Someone else", ["title" => "Nope"]);
+              throw new RuntimeException("Wrong-name checklist editing was accepted.");
+          } catch (DomainException) {
+          }
+
+          try {
               rafabru_wall_move_note($write["id"], "Someone else", 0.2, 200);
               throw new RuntimeException("Wrong-name ownership was accepted.");
           } catch (DomainException) {
@@ -136,27 +159,90 @@ jobs:
           echo "wall feature smoke test passed\n";
           '
 
+      - name: Smoke test admin order and route protection
+        shell: bash
+        run: |
+          set -euo pipefail
+          export RAFABRU_CONFIG=/tmp/rafabru-ci-config.php
+          cat > /tmp/rafabru-ci-data/links.json <<'JSON'
+          [
+            {"id":"link_a","text":"A","url":"https://example.com/a","order":1},
+            {"id":"link_b","text":"B","url":"https://example.com/b","order":2}
+          ]
+          JSON
+          php -r '
+          $_SERVER["REQUEST_METHOD"] = "POST";
+          require "app/bootstrap.php";
+          rafabru_start_session();
+          $_SESSION["is_admin"] = true;
+          $_SESSION["csrf"] = "ci-token";
+          $_POST = ["action" => "move_link_down", "id" => "link_a", "csrf" => "ci-token"];
+          require "app/admin-preflight.php";
+          '
+          php -r '
+          $links = json_decode(file_get_contents("/tmp/rafabru-ci-data/links.json"), true, 512, JSON_THROW_ON_ERROR);
+          if (($links[0]["id"] ?? "") !== "link_b" || ($links[1]["id"] ?? "") !== "link_a") {
+              throw new RuntimeException("Admin order did not persist.");
+          }
+          '
+          rm -f /tmp/rafabru-preflight-returned
+          php -r '
+          $_SERVER["REQUEST_METHOD"] = "POST";
+          require "app/bootstrap.php";
+          rafabru_start_session();
+          $_SESSION["is_admin"] = true;
+          $_SESSION["csrf"] = "ci-token";
+          $_POST = ["action" => "add_redirect", "slug" => "write", "csrf" => "ci-token"];
+          require "app/admin-preflight.php";
+          file_put_contents("/tmp/rafabru-preflight-returned", "bad");
+          '
+          test ! -e /tmp/rafabru-preflight-returned
+          php -r '
+          $_SERVER["REQUEST_METHOD"] = "POST";
+          require "app/bootstrap.php";
+          rafabru_start_session();
+          $_SESSION["is_admin"] = true;
+          $_SESSION["csrf"] = "ci-token";
+          $_POST = ["action" => "add_redirect", "slug" => "playlist", "csrf" => "ci-token"];
+          require "app/admin-preflight.php";
+          file_put_contents("/tmp/rafabru-preflight-returned", "ok");
+          '
+          grep -q ok /tmp/rafabru-preflight-returned
+
       - name: Smoke test public page injection
         shell: bash
         run: |
           set -euo pipefail
           export RAFABRU_CONFIG=/tmp/rafabru-ci-config.php
           REQUEST_URI=/write/ php public/write/index.php > /tmp/rafabru-write.html
+          grep -q '/assets/js/published-note-state.js?v=1' /tmp/rafabru-write.html
+          grep -q '/assets/js/published-note-event-guard.js?v=1' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-extras-preload.js?v=2' /tmp/rafabru-write.html
+          grep -q '/assets/js/draft-checklist-repair.js?v=1' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-core-repair.js?v=2' /tmp/rafabru-write.html
-          grep -q '/assets/js/site-audio.js' /tmp/rafabru-write.html
-          grep -q '/assets/css/wall-extras.css?v=2' /tmp/rafabru-write.html
+          grep -q '/assets/css/published-notes.css?v=1' /tmp/rafabru-write.html
           grep -q '/assets/css/wall-core-repair.css?v=3' /tmp/rafabru-write.html
+          grep -q '/assets/js/site-internal-links.js?v=1' /tmp/rafabru-write.html
+          grep -q '/assets/css/site-internal-links.css?v=1' /tmp/rafabru-write.html
           grep -Fq '.checklist-editor:not([hidden])' public/assets/css/wall-core-repair.css
           grep -Fq 'width: var(--spread-width)' public/assets/css/wall-core-repair.css
           grep -Fq 'height: var(--page-height)' public/assets/css/wall-core-repair.css
           ! grep -q '/assets/js/wall-hold-move.js' /tmp/rafabru-write.html
           ! grep -q '/assets/js/wall-move-click-guard.js' /tmp/rafabru-write.html
           ! grep -q '/assets/js/wall-extras-fixes.js' /tmp/rafabru-write.html
+          published_line=$(grep -n '/assets/js/published-note-state.js' /tmp/rafabru-write.html | cut -d: -f1)
+          guard_line=$(grep -n '/assets/js/published-note-event-guard.js' /tmp/rafabru-write.html | cut -d: -f1)
           preload_line=$(grep -n '/assets/js/wall-extras-preload.js' /tmp/rafabru-write.html | cut -d: -f1)
+          draft_line=$(grep -n '/assets/js/draft-checklist-repair.js' /tmp/rafabru-write.html | cut -d: -f1)
           repair_line=$(grep -n '/assets/js/wall-core-repair.js' /tmp/rafabru-write.html | cut -d: -f1)
           write_line=$(grep -n '/assets/js/write-wall.js' /tmp/rafabru-write.html | cut -d: -f1)
-          test "$preload_line" -lt "$repair_line"
+          test "$published_line" -lt "$guard_line"
+          test "$guard_line" -lt "$preload_line"
+          test "$preload_line" -lt "$draft_line"
+          test "$draft_line" -lt "$repair_line"
           test "$repair_line" -lt "$write_line"
           REQUEST_URI=/api/site-data.php php public/api/site-data.php > /tmp/rafabru-site-data.json
-          php -r 'json_decode(file_get_contents("/tmp/rafabru-site-data.json"), true, 512, JSON_THROW_ON_ERROR);'
+          php -r '
+          $data = json_decode(file_get_contents("/tmp/rafabru-site-data.json"), true, 512, JSON_THROW_ON_ERROR);
+          if (count($data["siteLinks"] ?? []) < 4) throw new RuntimeException("Internal site links missing.");
+          '

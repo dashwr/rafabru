@@ -36,10 +36,22 @@ if ($musicEnabled) {
     }
 }
 
+$publicRoot = dirname(__DIR__);
+$reservedRoutes = [
+    'admin', 'api', 'app', 'assets', 'audio', 'config', 'font', 'links',
+    'login', 'logout', 'music', 'og-image', 'redirect', 'storage', 'write',
+];
+$routeConflicts = static function (string $slug) use ($publicRoot, $reservedRoutes): bool {
+    return in_array($slug, $reservedRoutes, true)
+        || is_file($publicRoot . '/' . $slug)
+        || is_dir($publicRoot . '/' . $slug)
+        || is_file($publicRoot . '/' . $slug . '.php');
+};
+
 $shortcuts = [];
 foreach ($redirects as $redirect) {
     $slug = strtolower(trim((string) ($redirect['slug'] ?? '')));
-    if (($redirect['enabled'] ?? false) !== true || !rafabru_is_valid_slug($slug)) {
+    if (($redirect['enabled'] ?? false) !== true || !rafabru_is_valid_slug($slug) || $routeConflicts($slug)) {
         continue;
     }
 
@@ -48,6 +60,13 @@ foreach ($redirects as $redirect) {
         'href' => '/' . rawurlencode($slug),
     ];
 }
+
+$siteLinks = [
+    ['slug' => 'home', 'label' => '/', 'href' => '/'],
+    ['slug' => 'write', 'label' => '/write', 'href' => '/write/'],
+    ['slug' => 'music', 'label' => '/music', 'href' => '/?popup=music'],
+    ['slug' => 'links', 'label' => '/links', 'href' => '/?popup=links'],
+];
 
 try {
     echo json_encode([
@@ -58,6 +77,7 @@ try {
             'playlist' => $playlist,
         ],
         'redirects' => $shortcuts,
+        'siteLinks' => $siteLinks,
     ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 } catch (JsonException) {
     http_response_code(500);
