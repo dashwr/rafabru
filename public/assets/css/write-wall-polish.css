@@ -1,11 +1,10 @@
 /* Desktop writing-wall refinements layered after write-wall.css. */
 :root {
-    /* Each column begins after the pink notebook margin and ends before the paper edge. */
-    --paper-padding-x: 54px;
-    --paper-padding-y: 30px;
-    --page-inner-width: 282px;
-    --page-inner-height: 408px;
-    --column-gap: 106px;
+    --paper-padding-left: 54px;
+    --paper-padding-right: 24px;
+    --paper-padding-top: 30px;
+    --paper-padding-bottom: 22px;
+    --notebook-line-height: 24px;
 }
 
 .notebook-paper {
@@ -16,14 +15,87 @@
         #f7ecd1;
 }
 
+/* Each physical paper has its own real textarea, so either page can be selected directly. */
 .notebook-flow {
-    top: var(--paper-padding-y);
-    left: var(--paper-padding-x);
-    width: 4550px;
-    height: var(--page-inner-height);
+    position: absolute;
+    z-index: 4;
+    top: 0;
+    left: 0;
+    display: flex;
+    gap: var(--page-gap);
+    width: max-content;
+    height: var(--page-height);
+    overflow: visible;
+    outline: none;
+    will-change: transform;
+}
+
+.notebook-page-editor {
+    flex: 0 0 var(--page-width);
+    width: var(--page-width);
+    height: var(--page-height);
+    margin: 0;
+    padding:
+        var(--paper-padding-top)
+        var(--paper-padding-right)
+        var(--paper-padding-bottom)
+        var(--paper-padding-left);
+    border: 0;
+    border-radius: 0;
+    outline: 0;
+    overflow: hidden;
+    resize: none;
+    background: transparent;
+    color: #4b414b;
+    font: inherit;
     font-size: 16px;
-    line-height: 24px;
-    column-gap: var(--column-gap);
+    line-height: var(--notebook-line-height);
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    caret-color: #b5457c;
+    box-shadow: none;
+    scrollbar-width: none;
+}
+
+.notebook-page-editor::-webkit-scrollbar {
+    display: none;
+}
+
+.notebook-page-editor:focus {
+    background: rgba(255, 255, 255, 0.055);
+    box-shadow: inset 0 0 0 1px rgba(181, 69, 124, 0.12);
+}
+
+.notebook-page-editor[readonly] {
+    cursor: default;
+    user-select: text;
+}
+
+.notebook-page-editor[readonly]:focus {
+    background: transparent;
+    box-shadow: none;
+}
+
+.notebook-page-editor::placeholder {
+    color: rgba(83, 68, 77, 0.45);
+}
+
+.notebook-page-measure {
+    position: fixed !important;
+    top: -2000px !important;
+    left: -2000px !important;
+    z-index: -1 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+.notebook-arrow:disabled {
+    color: #b3a5ac;
+    background: #e2d9de;
+    border-color: #f4edf1 #aaa0a5 #aaa0a5 #f4edf1;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.65);
+    filter: grayscale(1);
+    opacity: 0.72;
 }
 
 /* The note itself is an index card for the notebook: title first, author last. */
