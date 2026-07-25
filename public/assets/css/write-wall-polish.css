@@ -102,6 +102,7 @@
 .wall-postit {
     align-items: stretch;
     text-align: center;
+    transform-origin: top left;
 }
 
 .wall-postit__title {
@@ -151,6 +152,27 @@
     flex-direction: column;
     align-items: stretch;
     text-align: center;
+    opacity: 0.76;
+    transform: rotate(var(--placement-rotation, -1deg));
+    transform-origin: top left;
+    outline: 1px dashed rgba(113, 53, 86, 0.72);
+    outline-offset: 3px;
+}
+
+.placement-postit::before {
+    content: "";
+    position: absolute;
+    z-index: 4;
+    top: -8px;
+    left: -8px;
+    width: 13px;
+    height: 13px;
+    border: 1px solid #7f3e64;
+    background:
+        linear-gradient(90deg, transparent 5px, #7f3e64 5px 7px, transparent 7px),
+        linear-gradient(transparent 5px, #7f3e64 5px 7px, transparent 7px),
+        #fff7fb;
+    box-shadow: 1px 1px 0 rgba(255,255,255,0.8), 2px 2px 0 rgba(76,49,64,0.24);
 }
 
 .placement-postit strong {
