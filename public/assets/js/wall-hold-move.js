@@ -103,22 +103,24 @@
             if (grabbed) return;
 
             postit.dataset.rafabruHoldOpen = '1';
+            postit.dataset.rafabruAllowOwnedOpen = '1';
             window.setTimeout(() => {
                 if (!postit.isConnected || extras.moving) return;
                 postit.click();
-                queueMicrotask(() => delete postit.dataset.rafabruHoldOpen);
+                queueMicrotask(() => {
+                    delete postit.dataset.rafabruHoldOpen;
+                    delete postit.dataset.rafabruAllowOwnedOpen;
+                });
             }, 0);
         }, true);
 
         document.addEventListener('pointercancel', clearPress, true);
 
         document.addEventListener('click', (event) => {
-            if (!event.isTrusted && event.target.closest?.('.wall-postit')?.dataset.rafabruHoldOpen === '1') {
-                return;
-            }
-            if (extras.moving) return;
             const postit = event.target.closest?.('.wall-postit');
             if (!postit) return;
+            if (!event.isTrusted && postit.dataset.rafabruHoldOpen === '1') return;
+            if (extras.moving) return;
             const note = extras.noteMap.get(postit.dataset.noteId);
             if (!note || !owns(note)) return;
             if (event.isTrusted && Date.now() <= suppressTrustedClicksUntil) {
