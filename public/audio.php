@@ -5,6 +5,7 @@ declare(strict_types=1);
 require __DIR__ . '/bootstrap.php';
 
 $id = trim((string) ($_GET['id'] ?? ''));
+$download = (string) ($_GET['download'] ?? '') === '1';
 $songs = rafabru_read_json('songs.json', []);
 $song = null;
 
@@ -37,7 +38,7 @@ if ($size === false || $size < 1) {
 $start = 0;
 $end = $size - 1;
 $status = 200;
-$range = $_SERVER['HTTP_RANGE'] ?? '';
+$range = $download ? '' : ($_SERVER['HTTP_RANGE'] ?? '');
 
 if (is_string($range) && preg_match('/bytes=(\d*)-(\d*)/', $range, $matches) === 1) {
     if ($matches[1] !== '') {
@@ -64,7 +65,15 @@ header('Content-Length: ' . $length);
 header('Cache-Control: private, max-age=3600');
 header('X-Content-Type-Options: nosniff');
 
-if ($status === 206) {
+if ($download) {
+    $displayTitle = trim((string) ($song['title'] ?? '')) ?: pathinfo($filename, PATHINFO_FILENAME);
+    $displayTitle = preg_replace('/[\\\/:*?"<>|\x00-\x1F\x7F]+/u', '-', $displayTitle) ?? 'song';
+    $downloadName = trim($displayTitle, " .-") . '.mp3';
+    if ($downloadName === '.mp3') {
+        $downloadName = 'song.mp3';
+    }
+    header('Content-Disposition: attachment; filename="song.mp3"; filename*=UTF-8\'\'' . rawurlencode($downloadName));
+} elseif ($status === 206) {
     header(sprintf('Content-Range: bytes %d-%d/%d', $start, $end, $size));
 }
 
