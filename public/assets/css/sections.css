@@ -1,0 +1,291 @@
+/* Desktop-only section pages for the public music and redirect libraries. */
+.section-page {
+    min-width: 980px;
+    margin: 0;
+    color: #51475d;
+    background: #fff0f7;
+}
+
+.section-shell {
+    width: min(1180px, calc(100vw - 72px));
+    margin: 34px auto 54px;
+}
+
+.section-window {
+    width: 100%;
+}
+
+.section-content {
+    padding: 26px;
+    background:
+        repeating-linear-gradient(to bottom, rgba(206, 157, 181, 0.12) 0 1px, transparent 1px 30px),
+        #fffafb;
+}
+
+.section-heading {
+    margin: 0 0 20px;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.section-copy {
+    margin: -10px 0 22px;
+    color: #796778;
+}
+
+/* Expanded car-radio library. */
+.radio-library {
+    display: grid;
+    grid-template-columns: minmax(520px, 1.15fr) minmax(390px, 0.85fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.radio-library__deck {
+    padding: 18px;
+    border: 2px solid;
+    border-color: #f7f1f4 #726970 #726970 #f7f1f4;
+    background: linear-gradient(#bcb3b9, #91878e);
+    box-shadow: 7px 9px 0 rgba(71, 53, 63, 0.18);
+}
+
+.radio-library__bezel {
+    padding: 14px;
+    border: 3px solid;
+    border-color: #62585e #d1c8cd #d1c8cd #62585e;
+    background: #776d74;
+    box-shadow: inset 0 0 0 2px #4e464b;
+}
+
+.radio-library__screen {
+    min-height: 185px;
+    padding: 16px 18px;
+    border: 4px solid;
+    border-color: #2c2529 #77646e #77646e #2c2529;
+    background:
+        repeating-linear-gradient(to bottom, rgba(255,255,255,0.025) 0 1px, transparent 1px 4px),
+        radial-gradient(circle at 50% 45%, rgba(214, 126, 164, 0.12), transparent 66%),
+        #352b31;
+    box-shadow: inset 0 0 22px rgba(0,0,0,0.58);
+    color: #edafc7;
+}
+
+.radio-library__status {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 14px;
+    align-items: center;
+    color: #c88fa6;
+    font-size: 0.72rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+}
+
+.radio-library__stereo::before {
+    content: "●";
+    margin-right: 5px;
+    color: #d58eaa;
+    text-shadow: 0 0 5px rgba(213, 142, 170, 0.75);
+}
+
+.radio-library__track-window {
+    display: flex;
+    align-items: center;
+    min-height: 72px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    overflow: hidden;
+    border: 2px solid;
+    border-color: #1f191d #63535c #63535c #1f191d;
+    background: #46343e;
+    box-shadow: inset 2px 2px 7px rgba(0,0,0,0.44);
+}
+
+.radio-library__track-name {
+    display: block;
+    width: max-content;
+    min-width: 100%;
+    color: #f3b6cd;
+    font-size: 1.42rem;
+    letter-spacing: 0.08em;
+    line-height: 1.25;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-shadow: 0 0 3px rgba(255, 211, 229, 0.85), 0 0 8px rgba(218, 126, 162, 0.5);
+}
+
+.radio-library__track-name.is-scrolling {
+    animation: library-radio-scroll 9s linear infinite alternate;
+}
+
+@keyframes library-radio-scroll {
+    0%, 12% { transform: translateX(0); }
+    88%, 100% { transform: translateX(calc(-1 * var(--library-scroll-distance))); }
+}
+
+.radio-library__timeline {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.radio-library__time {
+    min-width: 92px;
+    color: #d59ab2;
+    font-size: 0.75rem;
+    text-align: right;
+}
+
+.radio-library__controls {
+    display: grid;
+    grid-template-columns: auto auto auto minmax(160px, 1fr) 44px;
+    gap: 9px;
+    align-items: center;
+    margin-top: 15px;
+    padding: 12px;
+    border: 2px solid;
+    border-color: #f1ebee #716970 #716970 #f1ebee;
+    background: #aaa1a7;
+}
+
+.radio-library__button,
+.track-action {
+    min-height: 36px;
+    padding: 6px 11px;
+    border: 2px solid;
+    border-color: #f7f2f5 #70676d #70676d #f7f2f5;
+    background: linear-gradient(#ddd6da, #aaa1a7);
+    color: #4f444b;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.radio-library__button:active,
+.track-action:active {
+    border-color: #70676d #f7f2f5 #f7f2f5 #70676d;
+    transform: translate(1px, 1px);
+}
+
+.radio-library__volume-output {
+    text-align: right;
+}
+
+.library-playlist {
+    background: #efe7eb;
+}
+
+.library-playlist__body {
+    max-height: 590px;
+    overflow: auto;
+    padding: 8px;
+    background: #f9f4f7;
+}
+
+.library-track {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto auto;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 7px;
+    padding: 8px;
+    border: 1px solid #bbaab3;
+    background: #fffafb;
+}
+
+.library-track.is-active {
+    background: #f4dce8;
+    outline: 1px dotted #8b4b70;
+    outline-offset: -4px;
+}
+
+.library-track__number {
+    color: #9a607f;
+    text-align: center;
+}
+
+.library-track__title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.track-action {
+    min-width: 70px;
+    min-height: 31px;
+    padding: 4px 8px;
+    text-align: center;
+}
+
+/* Redirect cloud. */
+.redirect-cloud-window {
+    width: 800px;
+    margin: 0 auto;
+}
+
+.redirect-cloud {
+    position: relative;
+    width: 760px;
+    height: 760px;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 3px solid;
+    border-color: #fff #887985 #887985 #fff;
+    background:
+        radial-gradient(circle at 12% 18%, rgba(255,255,255,0.8) 0 1px, transparent 1.6px) 0 0 / 29px 31px,
+        repeating-linear-gradient(0deg, transparent 0 23px, rgba(205, 149, 178, 0.16) 24px),
+        #f5dce8;
+    box-shadow: inset 2px 2px 0 #c79bb1, 8px 10px 0 rgba(83, 59, 72, 0.16);
+}
+
+.redirect-shortcut {
+    position: absolute;
+    z-index: var(--z, 2);
+    left: var(--x);
+    top: var(--y);
+    display: inline-flex;
+    min-width: 94px;
+    max-width: 190px;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 10px;
+    color: #554651;
+    background: #fff9fc;
+    text-decoration: none;
+    transform: translate(-50%, -50%) rotate(var(--r));
+    box-shadow: 3px 4px 0 rgba(78, 55, 68, 0.14);
+}
+
+.redirect-shortcut::before {
+    content: "↗";
+    color: #b45183;
+}
+
+.redirect-shortcut:hover,
+.redirect-shortcut:focus-visible {
+    z-index: 999 !important;
+    color: #8e3768;
+    background: #eaf6ff;
+    outline: 2px dotted #7f4667;
+    outline-offset: 2px;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1.04);
+}
+
+.redirect-cloud__empty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #826b78;
+    text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .radio-library__track-name.is-scrolling {
+        animation: none;
+    }
+}
