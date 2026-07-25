@@ -89,6 +89,27 @@ SEARCH
         placementPostit.style.top = `${wallRect.top + savedTop}px`;
         const values = designerValues();
 REPLACE,
+    <<<'SEARCH'
+        button.addEventListener('click', () => openPublishedNotebook(note.id));
+SEARCH
+    => <<<'REPLACE'
+        button.addEventListener('click', () => {
+            if (typeof window.rafabruOpenPublishedNote === 'function') {
+                window.rafabruOpenPublishedNote(note.id);
+                return;
+            }
+            openPublishedNotebook(note.id);
+        });
+REPLACE,
+    <<<'SEARCH'
+            if (requestedId) openPublishedNotebook(requestedId, false);
+SEARCH
+    => <<<'REPLACE'
+            if (requestedId) {
+                if (typeof window.rafabruOpenPublishedNote === 'function') window.rafabruOpenPublishedNote(requestedId, false);
+                else openPublishedNotebook(requestedId, false);
+            }
+REPLACE,
 ];
 
 foreach ($replacements as $search => $replacement) {
