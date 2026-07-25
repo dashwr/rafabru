@@ -1,0 +1,9 @@
+.wall-postit.is-owned-note {
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+.wall-postit.is-owned-note:active:not(.is-being-moved) {
+    filter: brightness(0.98);
+}
