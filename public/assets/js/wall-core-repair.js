@@ -8,6 +8,13 @@
         .slice(0, 32)
         .toLocaleLowerCase();
 
+    /* Register before DOMContentLoaded so the obsolete dblclick handler never wins. */
+    document.addEventListener('dblclick', (event) => {
+        if (!event.target.closest?.('.wall-postit')) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    }, true);
+
     const setup = () => {
         const extras = window.rafabruWallExtras;
         const wall = document.querySelector('[data-wall]');
@@ -88,8 +95,10 @@
         };
 
         const positionControl = (control, postit) => {
-            control.style.left = postit.style.left;
-            control.style.top = postit.style.top;
+            const left = postit.style.left;
+            const top = postit.style.top;
+            if (control.style.left !== left) control.style.left = left;
+            if (control.style.top !== top) control.style.top = top;
             control.hidden = postit.classList.contains('is-being-moved');
         };
 
@@ -157,13 +166,6 @@
             }, 0);
         }, true);
 
-        /* Disable the obsolete double-click gesture without affecting normal clicks. */
-        document.addEventListener('dblclick', (event) => {
-            if (!event.target.closest?.('.wall-postit')) return;
-            event.preventDefault();
-            event.stopImmediatePropagation();
-        }, true);
-
         document.addEventListener('pointermove', () => {
             if (!extras.moving) return;
             const control = controls.get(String(extras.moving.note?.id || ''));
@@ -184,7 +186,7 @@
         }, true);
 
         const observer = new MutationObserver(queueSync);
-        observer.observe(notesRoot, {childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class']});
+        observer.observe(notesRoot, {childList: true, subtree: true});
         const bodyObserver = new MutationObserver(() => cleanPageBreaks());
         bodyObserver.observe(document.body, {childList: true, subtree: true});
 
