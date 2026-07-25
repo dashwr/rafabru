@@ -97,7 +97,7 @@ $icons = [
 
     <title><?= rafabru_h($title) ?></title>
     <link rel="icon" type="image/png" href="/assets/images/favicon.png">
-    <link rel="stylesheet" href="/assets/css/site.css?v=20260724-6">
+    <link rel="stylesheet" href="/assets/css/site.css?v=20260725-2">
     <link rel="stylesheet" href="/assets/css/responsive.css?v=20260724-6">
     <script src="/assets/js/lang.js?v=3" defer></script>
 </head>
@@ -196,7 +196,7 @@ $icons = [
                         <div class="music-panel__body">
                             <div class="now-playing" aria-live="polite">
                                 <span class="now-playing__label">now playing</span>
-                                <span class="now-playing__name" data-now-playing<?= $playlist !== [] ? ' data-i18n-skip' : '' ?>><?= $playlist === [] ? 'no music available' : rafabru_h((string) $playlist[0]['title']) ?></span>
+                                <span class="now-playing__name" data-now-playing<?= $playlist !== [] ? ' data-i18n-skip' : '' ?>><?= $playlist === [] ? 'no music available' : 'press play to start' ?></span>
                             </div>
                             <div class="player-controls">
                                 <button class="retro-button" type="button" data-play aria-label="Play music" <?= $playlist === [] ? 'disabled' : '' ?>>▶</button>
@@ -231,6 +231,6 @@ $icons = [
         </div>
     <?php endif; ?>
 
-    <script src="/assets/js/player.js?v=2" defer></script>
+    <script src="/assets/js/player.js?v=3" defer></script>
 </body>
 </html>
