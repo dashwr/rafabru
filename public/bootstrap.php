@@ -84,7 +84,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                 ];
                 if ($isWritePage) {
                     $styles[] = '/assets/css/wall-extras.css?v=2';
-                    $styles[] = '/assets/css/wall-core-repair.css?v=1';
+                    $styles[] = '/assets/css/wall-core-repair.css?v=2';
                 }
                 $markup = '';
                 foreach ($styles as $href) {
@@ -103,7 +103,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                         $html = substr_replace(
                             $html,
                             '<script src="/assets/js/wall-extras-preload.js?v=2" defer></script>' . PHP_EOL
-                            . '    <script src="/assets/js/wall-core-repair.js?v=1" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/wall-core-repair.js?v=2" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/wall-title-guard.js?v=1" defer></script>' . PHP_EOL
                             . '    ',
                             $position,

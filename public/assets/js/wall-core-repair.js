@@ -22,17 +22,33 @@
         const navigation = document.querySelector('.notebook-navigation');
         if (!extras || !wall || !notesRoot || !navigation) return;
 
+        /* The old movement layer remains loaded for checklist support, but it no longer owns movement. */
+        extras.moving = null;
+
         const localT = (english, portuguese) => document.documentElement.lang === 'pt-BR' ? portuguese : english;
         const owns = (note) => {
             const identity = normalizeName(extras.identity);
             return identity !== '' && normalizeName(note?.author) === identity;
         };
-        const showMessage = (message) => {
+        const showMessage = (message, duration = 3000) => {
             const toast = document.querySelector('[data-wall-toast]');
             if (!toast) return;
             toast.textContent = message;
             toast.hidden = false;
-            window.setTimeout(() => { toast.hidden = true; }, 3000);
+            window.setTimeout(() => { toast.hidden = true; }, duration);
+        };
+        const jsonRequest = async (url, payload) => {
+            const response = await window.fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+                body: JSON.stringify(payload),
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.ok === false) {
+                throw new Error(result.message || result.error || 'Request failed.');
+            }
+            return result;
         };
 
         /* Stabilize the Write / Check controls created by the checklist layer. */
@@ -83,7 +99,10 @@
 
         /* Explicit owner-only Move controls. Normal note clicks remain untouched. */
         const controls = new Map();
+        let activeMove = null;
+        let savingMove = false;
         let syncQueued = false;
+
         const queueSync = () => {
             if (syncQueued) return;
             syncQueued = true;
@@ -99,7 +118,7 @@
             const top = postit.style.top;
             if (control.style.left !== left) control.style.left = left;
             if (control.style.top !== top) control.style.top = top;
-            control.hidden = postit.classList.contains('is-being-moved');
+            control.hidden = activeMove?.element === postit;
         };
 
         const syncMoveControls = () => {
@@ -134,55 +153,119 @@
             });
         };
 
-        document.addEventListener('click', (event) => {
-            const control = event.target.closest?.('[data-move-note]');
-            if (!control) return;
-            event.preventDefault();
-            event.stopImmediatePropagation();
+        const moveElementTo = (clientX, clientY) => {
+            if (!activeMove || savingMove) return;
+            const wallRect = wall.getBoundingClientRect();
+            const width = activeMove.element.offsetWidth || 214;
+            const height = activeMove.element.offsetHeight || 190;
+            const maximumLeft = Math.max(0, wallRect.width - width);
+            const maximumTop = Math.max(130, wall.scrollHeight - height - 130);
+            const left = Math.min(maximumLeft, Math.max(0, clientX - wallRect.left - activeMove.offsetX));
+            const top = Math.min(maximumTop, Math.max(130, clientY - wallRect.top - activeMove.offsetY));
+            activeMove.element.style.left = `${Math.round(left)}px`;
+            activeMove.element.style.top = `${Math.round(top)}px`;
+        };
 
-            const id = String(control.dataset.moveNote || '');
-            const note = extras.noteMap.get(id);
-            const postit = notesRoot.querySelector(`.wall-postit[data-note-id="${CSS.escape(id)}"]`);
-            if (!note || !postit || !owns(note) || extras.moving) return;
-
-            const pointerX = event.clientX;
-            const pointerY = event.clientY;
-            window.setTimeout(() => {
-                if (extras.moving || !postit.isConnected) return;
-                const rect = postit.getBoundingClientRect();
-                extras.moving = {
-                    note,
-                    element: postit,
-                    offsetX: Math.min(rect.width - 8, Math.max(8, pointerX - rect.left)),
-                    offsetY: Math.min(rect.height - 8, Math.max(8, pointerY - rect.top)),
-                    wallRect: wall.getBoundingClientRect(),
-                    originalLeft: postit.style.left,
-                    originalTop: postit.style.top,
-                };
-                postit.classList.add('is-being-moved');
-                document.body.classList.add('is-moving-owned-note');
-                control.hidden = true;
-                showMessage(localT('Move the note, then click once to place it.', 'Mova a nota e clique uma vez para colocá-la.'));
-            }, 0);
-        }, true);
-
-        document.addEventListener('pointermove', () => {
-            if (!extras.moving) return;
-            const control = controls.get(String(extras.moving.note?.id || ''));
-            if (control) positionControl(control, extras.moving.element);
-        });
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key !== 'Escape' || !extras.moving) return;
-            event.preventDefault();
-            const moving = extras.moving;
-            extras.moving = null;
+        const cancelMove = () => {
+            if (!activeMove) return;
+            const moving = activeMove;
+            activeMove = null;
+            savingMove = false;
             moving.element.style.left = moving.originalLeft;
             moving.element.style.top = moving.originalTop;
             moving.element.classList.remove('is-being-moved');
             document.body.classList.remove('is-moving-owned-note');
             queueSync();
             showMessage(localT('Move cancelled.', 'Movimento cancelado.'));
+        };
+
+        const finishMove = async () => {
+            if (!activeMove || savingMove) return;
+            const moving = activeMove;
+            savingMove = true;
+            const wallRect = wall.getBoundingClientRect();
+            const width = moving.element.offsetWidth || 214;
+            const left = Number.parseFloat(moving.element.style.left) || 0;
+            const top = Number.parseFloat(moving.element.style.top) || 130;
+            const x = Math.min(0.96, Math.max(0.04, (left + width / 2) / wallRect.width));
+            const y = Math.max(130, Math.round(top));
+            showMessage(localT('Saving the new position...', 'Salvando a nova posição...'), 5000);
+
+            try {
+                const result = await jsonRequest('/api/wall/move.php', {
+                    id: moving.note.id,
+                    author: extras.identity,
+                    x,
+                    y,
+                });
+                if (result.note?.id) {
+                    extras.noteMap.set(String(result.note.id), result.note);
+                    window.dispatchEvent(new CustomEvent('rafabru-wall-note', {detail: result.note}));
+                }
+                activeMove = null;
+                savingMove = false;
+                moving.element.classList.remove('is-being-moved');
+                document.body.classList.remove('is-moving-owned-note');
+                queueSync();
+                showMessage(localT('Note moved.', 'Nota movida.'));
+            } catch (error) {
+                activeMove = null;
+                savingMove = false;
+                moving.element.style.left = moving.originalLeft;
+                moving.element.style.top = moving.originalTop;
+                moving.element.classList.remove('is-being-moved');
+                document.body.classList.remove('is-moving-owned-note');
+                queueSync();
+                showMessage(error.message || localT('The note could not be moved.', 'A nota não pôde ser movida.'), 5000);
+            }
+        };
+
+        document.addEventListener('click', (event) => {
+            const control = event.target.closest?.('[data-move-note]');
+            if (control) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (activeMove || savingMove) return;
+
+                const id = String(control.dataset.moveNote || '');
+                const note = extras.noteMap.get(id);
+                const postit = notesRoot.querySelector(`.wall-postit[data-note-id="${CSS.escape(id)}"]`);
+                if (!note || !postit || !owns(note)) {
+                    showMessage(localT('This note does not belong to the current name.', 'Esta nota não pertence ao nome atual.'));
+                    return;
+                }
+
+                const rect = postit.getBoundingClientRect();
+                activeMove = {
+                    note,
+                    element: postit,
+                    offsetX: rect.width / 2,
+                    offsetY: 24,
+                    originalLeft: postit.style.left,
+                    originalTop: postit.style.top,
+                };
+                postit.classList.add('is-being-moved');
+                document.body.classList.add('is-moving-owned-note');
+                control.hidden = true;
+                moveElementTo(event.clientX, event.clientY);
+                showMessage(localT('Move the note, then click once to place it.', 'Mova a nota e clique uma vez para colocá-la.'), 5000);
+                return;
+            }
+
+            if (!activeMove || savingMove) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            finishMove();
+        }, true);
+
+        document.addEventListener('pointermove', (event) => {
+            moveElementTo(event.clientX, event.clientY);
+        }, true);
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape' || !activeMove) return;
+            event.preventDefault();
+            cancelMove();
         }, true);
 
         const observer = new MutationObserver(queueSync);
