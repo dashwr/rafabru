@@ -1,0 +1,165 @@
+/* Draggable Windows 95-style Music and Links popups. */
+.site-popup {
+    position: fixed;
+    z-index: 16000;
+    display: block;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+    overflow: hidden;
+    background: #e8dfe4;
+    box-shadow: 9px 11px 0 rgba(48, 33, 41, 0.25);
+}
+
+.site-popup[hidden] {
+    display: none !important;
+}
+
+.site-popup--music {
+    width: min(1040px, calc(100vw - 28px));
+}
+
+.site-popup--links {
+    width: min(850px, calc(100vw - 28px));
+}
+
+.site-popup__titlebar {
+    cursor: move;
+    user-select: none;
+    touch-action: none;
+}
+
+.site-popup__title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.site-popup__controls {
+    display: inline-flex;
+    gap: 2px;
+    margin-left: auto;
+}
+
+.site-popup__control {
+    display: inline-grid;
+    width: 22px;
+    height: 20px;
+    padding: 0;
+    place-items: center;
+    border: 2px solid;
+    border-color: #fff #786e74 #786e74 #fff;
+    background: #d6ccd2;
+    color: #423a3f;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.site-popup__control:active {
+    border-color: #786e74 #fff #fff #786e74;
+    transform: translate(1px, 1px);
+}
+
+.site-popup__body {
+    max-height: calc(100vh - 60px);
+    overflow: auto;
+    padding: 18px;
+    border-top: 2px solid #fff;
+    background:
+        repeating-linear-gradient(to bottom, rgba(205, 151, 178, 0.12) 0 1px, transparent 1px 30px),
+        #fff9fc;
+}
+
+.site-popup--collapsed {
+    width: 310px;
+    height: auto;
+}
+
+.site-popup--collapsed .site-popup__body {
+    display: none;
+}
+
+.site-popup--maximized {
+    inset: 4px !important;
+    width: auto !important;
+    max-width: none;
+    max-height: none;
+}
+
+.site-popup--maximized .site-popup__body {
+    max-height: calc(100vh - 42px);
+}
+
+.site-popup__intro {
+    margin: 0 0 14px;
+    color: #766573;
+}
+
+.site-popup__radio-library {
+    grid-template-columns: minmax(500px, 1.15fr) minmax(340px, 0.85fr);
+    gap: 18px;
+}
+
+.site-popup__body--music .radio-library__deck {
+    min-width: 0;
+}
+
+.site-popup__body--music .library-playlist__body {
+    max-height: min(540px, calc(100vh - 250px));
+}
+
+.site-popup__body--music .radio-library__screen {
+    min-height: 170px;
+}
+
+.site-popup__body--music .radio-library__track-name {
+    font-size: 1.3rem;
+}
+
+.site-popup__body--music .library-track {
+    grid-template-columns: 34px minmax(0, 1fr) auto auto;
+}
+
+.site-popup__cloud-window {
+    width: 100%;
+    margin: 0;
+}
+
+.site-popup__redirect-cloud {
+    width: 100%;
+    height: min(660px, calc(100vh - 190px));
+    min-height: 500px;
+}
+
+.site-audio-resume {
+    position: fixed;
+    z-index: 22000;
+    right: 18px;
+    bottom: 18px;
+    min-height: 38px;
+    padding: 8px 13px;
+    border: 2px solid;
+    border-color: #fff #826f79 #826f79 #fff;
+    background: #f5d7e6;
+    color: #5c4250;
+    box-shadow: 4px 5px 0 rgba(60, 42, 51, 0.2);
+    cursor: pointer;
+}
+
+.site-audio-resume:active {
+    border-color: #826f79 #fff #fff #826f79;
+    transform: translate(1px, 1px);
+}
+
+@media (max-width: 900px) {
+    .site-popup__radio-library {
+        grid-template-columns: 1fr;
+    }
+
+    .site-popup--music,
+    .site-popup--links {
+        width: calc(100vw - 16px);
+    }
+}

@@ -3,20 +3,14 @@
 
     const portuguese = document.documentElement.lang === 'pt-BR';
     const path = window.location.pathname;
-    const active = path.startsWith('/links/')
-        ? 'links'
-        : path.startsWith('/music/')
-            ? 'music'
-            : path.startsWith('/write/')
-                ? 'write'
-                : '';
+    const active = path.startsWith('/write/') ? 'write' : '';
 
-    const buildLink = (href, label, key) => {
+    const buildWindowLink = (kind, label) => {
         const link = document.createElement('a');
         link.className = 'toolbar-menu-link';
-        link.href = href;
+        link.href = `/?popup=${encodeURIComponent(kind)}`;
         link.textContent = label;
-        if (active === key) link.classList.add('toolbar-menu-link--active');
+        link.dataset.siteWindowTarget = kind;
         return link;
     };
 
@@ -47,8 +41,8 @@
 
     document.querySelectorAll('.toolbar-nav').forEach((navigation) => {
         navigation.replaceChildren(
-            buildLink('/links/', 'Links', 'links'),
-            buildLink('/music/', portuguese ? 'Música' : 'Music', 'music'),
+            buildWindowLink('links', 'Links'),
+            buildWindowLink('music', portuguese ? 'Música' : 'Music'),
             buildWriteLink()
         );
     });

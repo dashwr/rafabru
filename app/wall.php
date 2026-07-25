@@ -29,6 +29,19 @@ function rafabru_wall_database(): PDO
     return $database;
 }
 
+function rafabru_wall_table_columns(PDO $database, string $table): array
+{
+    $rows = $database->query('PRAGMA table_info(' . $table . ')')->fetchAll();
+    $columns = [];
+    foreach ($rows as $row) {
+        $name = (string) ($row['name'] ?? '');
+        if ($name !== '') {
+            $columns[$name] = true;
+        }
+    }
+    return $columns;
+}
+
 function rafabru_wall_migrate(?PDO $database = null): void
 {
     $database ??= rafabru_wall_database();
@@ -46,10 +59,26 @@ function rafabru_wall_migrate(?PDO $database = null): void
             y_position INTEGER NOT NULL,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            deleted_at TEXT NULL
+            deleted_at TEXT NULL,
+            note_type TEXT NOT NULL DEFAULT "write",
+            checklist_json TEXT NOT NULL DEFAULT "[]",
+            rotation REAL NOT NULL DEFAULT 0
         )'
     );
+
+    $columns = rafabru_wall_table_columns($database, 'wall_notes');
+    if (!isset($columns['note_type'])) {
+        $database->exec('ALTER TABLE wall_notes ADD COLUMN note_type TEXT NOT NULL DEFAULT "write"');
+    }
+    if (!isset($columns['checklist_json'])) {
+        $database->exec('ALTER TABLE wall_notes ADD COLUMN checklist_json TEXT NOT NULL DEFAULT "[]"');
+    }
+    if (!isset($columns['rotation'])) {
+        $database->exec('ALTER TABLE wall_notes ADD COLUMN rotation REAL NOT NULL DEFAULT 0');
+    }
+
     $database->exec('CREATE INDEX IF NOT EXISTS wall_notes_visible_position ON wall_notes(deleted_at, y_position, post_number)');
+    $database->exec('CREATE INDEX IF NOT EXISTS wall_notes_author ON wall_notes(author, deleted_at)');
 }
 
 function rafabru_wall_colors(): array
@@ -80,8 +109,81 @@ function rafabru_wall_clean_text(mixed $value, int $maximum, bool $required = tr
     return $text;
 }
 
+function rafabru_wall_identity_key(mixed $value): string
+{
+    $name = rafabru_wall_clean_text($value, 32, false);
+    return mb_strtolower(preg_replace('/\s+/u', ' ', trim($name)) ?? trim($name), 'UTF-8');
+}
+
+function rafabru_wall_author_matches(string $storedAuthor, mixed $claimedAuthor): bool
+{
+    $stored = rafabru_wall_identity_key($storedAuthor);
+    $claimed = rafabru_wall_identity_key($claimedAuthor);
+    return $stored !== '' && $claimed !== '' && hash_equals($stored, $claimed);
+}
+
+function rafabru_wall_note_type(mixed $value): string
+{
+    return (string) $value === 'check' ? 'check' : 'write';
+}
+
+function rafabru_wall_rotation(mixed $value): float
+{
+    if (!is_numeric($value)) {
+        return random_int(-260, 260) / 100;
+    }
+    return min(3.5, max(-3.5, (float) $value));
+}
+
+function rafabru_wall_clean_checklist(mixed $value): array
+{
+    if (is_string($value)) {
+        $decoded = json_decode($value, true);
+        $value = is_array($decoded) ? $decoded : [];
+    }
+    if (!is_array($value)) {
+        return [];
+    }
+
+    $items = [];
+    foreach (array_slice($value, 0, 100) as $item) {
+        if (is_array($item)) {
+            $text = rafabru_wall_clean_text($item['text'] ?? '', 180, false);
+            $checked = ($item['checked'] ?? false) === true;
+        } else {
+            $text = rafabru_wall_clean_text($item, 180, false);
+            $checked = false;
+        }
+        if ($text === '' && count($items) >= 5) {
+            continue;
+        }
+        $items[] = ['text' => $text, 'checked' => $checked];
+    }
+
+    while (count($items) < 5) {
+        $items[] = ['text' => '', 'checked' => false];
+    }
+    return $items;
+}
+
+function rafabru_wall_decode_checklist(mixed $value): array
+{
+    if (!is_string($value) || $value === '') {
+        return [];
+    }
+    $decoded = json_decode($value, true);
+    return is_array($decoded) ? rafabru_wall_clean_checklist($decoded) : [];
+}
+
 function rafabru_wall_public_note(array $row, bool $includeBody = false): array
 {
+    $type = rafabru_wall_note_type($row['note_type'] ?? 'write');
+    $checklist = $type === 'check' ? rafabru_wall_decode_checklist($row['checklist_json'] ?? '[]') : [];
+    $completed = $type === 'check'
+        && $checklist !== []
+        && count(array_filter($checklist, static fn (array $item): bool => trim((string) ($item['text'] ?? '')) !== '')) > 0
+        && count(array_filter($checklist, static fn (array $item): bool => trim((string) ($item['text'] ?? '')) !== '' && ($item['checked'] ?? false) !== true)) === 0;
+
     $note = [
         'id' => (string) $row['public_id'],
         'number' => (int) $row['post_number'],
@@ -91,7 +193,12 @@ function rafabru_wall_public_note(array $row, bool $includeBody = false): array
         'color' => (string) $row['color_key'],
         'x' => (float) $row['x_ratio'],
         'y' => (int) $row['y_position'],
+        'rotation' => (float) ($row['rotation'] ?? 0),
+        'type' => $type,
+        'checklist' => $checklist,
+        'completed' => $completed,
         'createdAt' => (string) $row['created_at'],
+        'updatedAt' => (string) ($row['updated_at'] ?? $row['created_at']),
     ];
 
     if ($includeBody) {
@@ -101,10 +208,16 @@ function rafabru_wall_public_note(array $row, bool $includeBody = false): array
     return $note;
 }
 
+function rafabru_wall_select_columns(bool $includeBody = false): string
+{
+    $columns = 'public_id, post_number, title, author, preview, color_key, x_ratio, y_position, rotation, note_type, checklist_json, created_at, updated_at';
+    return $includeBody ? $columns . ', body' : $columns;
+}
+
 function rafabru_wall_list_notes(): array
 {
     $statement = rafabru_wall_database()->query(
-        'SELECT public_id, post_number, title, author, preview, color_key, x_ratio, y_position, created_at
+        'SELECT ' . rafabru_wall_select_columns(false) . '
          FROM wall_notes
          WHERE deleted_at IS NULL
          ORDER BY y_position ASC, post_number ASC'
@@ -123,7 +236,7 @@ function rafabru_wall_read_note(string $publicId): ?array
     }
 
     $statement = rafabru_wall_database()->prepare(
-        'SELECT public_id, post_number, title, author, preview, body, color_key, x_ratio, y_position, created_at
+        'SELECT ' . rafabru_wall_select_columns(true) . '
          FROM wall_notes
          WHERE public_id = :public_id AND deleted_at IS NULL
          LIMIT 1'
@@ -132,6 +245,18 @@ function rafabru_wall_read_note(string $publicId): ?array
     $row = $statement->fetch();
 
     return is_array($row) ? rafabru_wall_public_note($row, true) : null;
+}
+
+function rafabru_wall_find_owned_row(string $publicId, mixed $claimedAuthor): array
+{
+    $note = rafabru_wall_read_note($publicId);
+    if ($note === null) {
+        throw new InvalidArgumentException('That note no longer exists.');
+    }
+    if (!rafabru_wall_author_matches((string) $note['author'], $claimedAuthor)) {
+        throw new DomainException('The supplied name does not own this note.');
+    }
+    return $note;
 }
 
 function rafabru_wall_next_number(): int
@@ -145,11 +270,16 @@ function rafabru_wall_next_number(): int
 
 function rafabru_wall_create_note(array $input): array
 {
-    $body = rafabru_wall_clean_text($input['body'] ?? '', 15000);
-    $author = rafabru_wall_clean_text($input['author'] ?? '', 80);
+    $type = rafabru_wall_note_type($input['noteType'] ?? $input['type'] ?? 'write');
+    $author = rafabru_wall_clean_text($input['author'] ?? '', 32);
+    $body = rafabru_wall_clean_text($input['body'] ?? '', 15000, $type === 'write');
+    $checklist = $type === 'check' ? rafabru_wall_clean_checklist($input['checklist'] ?? []) : [];
+
     $preview = rafabru_wall_clean_text($input['preview'] ?? '', 240, false);
     if ($preview === '') {
-        $preview = mb_substr(preg_replace('/\s+/u', ' ', $body) ?? $body, 0, 220, 'UTF-8');
+        $preview = $type === 'check'
+            ? 'Checklist'
+            : mb_substr(preg_replace('/\s+/u', ' ', $body) ?? $body, 0, 220, 'UTF-8');
     }
 
     $requestedTitle = rafabru_wall_clean_text($input['title'] ?? '', 80, false);
@@ -165,6 +295,7 @@ function rafabru_wall_create_note(array $input): array
     }
     $x = min(0.96, max(0.04, $x));
     $y = min(100000, max(130, $y));
+    $rotation = rafabru_wall_rotation($input['rotation'] ?? null);
 
     $database = rafabru_wall_database();
     $transactionStarted = false;
@@ -173,19 +304,19 @@ function rafabru_wall_create_note(array $input): array
         $database->exec('BEGIN IMMEDIATE');
         $transactionStarted = true;
 
-        $postNumber = (int) $database->query(
+        $postNumber = max(1, (int) $database->query(
             'SELECT COALESCE(MAX(post_number), 0) + 1 FROM wall_notes'
-        )->fetchColumn();
-        $postNumber = max(1, $postNumber);
-        $title = $requestedTitle !== '' ? $requestedTitle : 'Post-it #' . str_pad((string) $postNumber, 2, '0', STR_PAD_LEFT);
+        )->fetchColumn());
+        $fallback = $type === 'check' ? 'Checklist #' : 'Post-it #';
+        $title = $requestedTitle !== '' ? $requestedTitle : $fallback . str_pad((string) $postNumber, 2, '0', STR_PAD_LEFT);
         $publicId = 'note_' . bin2hex(random_bytes(12));
         $timestamp = gmdate('c');
 
         $statement = $database->prepare(
             'INSERT INTO wall_notes
-                (public_id, post_number, title, author, preview, body, color_key, x_ratio, y_position, created_at, updated_at)
+                (public_id, post_number, title, author, preview, body, color_key, x_ratio, y_position, rotation, note_type, checklist_json, created_at, updated_at)
              VALUES
-                (:public_id, :post_number, :title, :author, :preview, :body, :color_key, :x_ratio, :y_position, :created_at, :updated_at)'
+                (:public_id, :post_number, :title, :author, :preview, :body, :color_key, :x_ratio, :y_position, :rotation, :note_type, :checklist_json, :created_at, :updated_at)'
         );
         $statement->execute([
             'public_id' => $publicId,
@@ -197,12 +328,13 @@ function rafabru_wall_create_note(array $input): array
             'color_key' => $color,
             'x_ratio' => $x,
             'y_position' => $y,
+            'rotation' => $rotation,
+            'note_type' => $type,
+            'checklist_json' => json_encode($checklist, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
             'created_at' => $timestamp,
             'updated_at' => $timestamp,
         ]);
 
-        // BEGIN IMMEDIATE was issued as SQL, so finish it with matching SQL.
-        // PDO::commit() does not consistently recognize raw SQLite transactions.
         $database->exec('COMMIT');
         $transactionStarted = false;
     } catch (Throwable $error) {
@@ -210,7 +342,6 @@ function rafabru_wall_create_note(array $input): array
             try {
                 $database->exec('ROLLBACK');
             } catch (Throwable) {
-                // Preserve the original failure.
             }
         }
         throw $error;
@@ -218,10 +349,71 @@ function rafabru_wall_create_note(array $input): array
 
     $note = rafabru_wall_read_note($publicId);
     if ($note === null) {
-        throw new RuntimeException('The post-it was saved but could not be reloaded.');
+        throw new RuntimeException('The note was saved but could not be reloaded.');
     }
-
     return $note;
+}
+
+function rafabru_wall_move_note(string $publicId, mixed $claimedAuthor, mixed $xValue, mixed $yValue): array
+{
+    rafabru_wall_find_owned_row($publicId, $claimedAuthor);
+    $x = min(0.96, max(0.04, is_numeric($xValue) ? (float) $xValue : 0.5));
+    $y = min(100000, max(130, is_numeric($yValue) ? (int) $yValue : 220));
+    $statement = rafabru_wall_database()->prepare(
+        'UPDATE wall_notes SET x_ratio = :x, y_position = :y, updated_at = :updated_at WHERE public_id = :public_id AND deleted_at IS NULL'
+    );
+    $statement->execute(['x' => $x, 'y' => $y, 'updated_at' => gmdate('c'), 'public_id' => $publicId]);
+    return rafabru_wall_read_note($publicId) ?? throw new RuntimeException('The note could not be reloaded.');
+}
+
+function rafabru_wall_update_note(string $publicId, mixed $claimedAuthor, array $input): array
+{
+    $existing = rafabru_wall_find_owned_row($publicId, $claimedAuthor);
+    $type = rafabru_wall_note_type($existing['type'] ?? 'write');
+    $title = rafabru_wall_clean_text($input['title'] ?? $existing['title'], 80);
+    $body = $type === 'write'
+        ? rafabru_wall_clean_text($input['body'] ?? $existing['body'], 15000)
+        : (string) ($existing['body'] ?? '');
+    $checklist = $type === 'check'
+        ? rafabru_wall_clean_checklist($input['checklist'] ?? $existing['checklist'])
+        : [];
+    $color = (string) ($input['color'] ?? $existing['color']);
+    if (!in_array($color, rafabru_wall_colors(), true)) {
+        $color = (string) $existing['color'];
+    }
+    $preview = $type === 'check'
+        ? $title
+        : mb_substr(preg_replace('/\s+/u', ' ', $body) ?? $body, 0, 220, 'UTF-8');
+
+    $statement = rafabru_wall_database()->prepare(
+        'UPDATE wall_notes
+         SET title = :title, body = :body, preview = :preview, checklist_json = :checklist_json, color_key = :color_key, updated_at = :updated_at
+         WHERE public_id = :public_id AND deleted_at IS NULL'
+    );
+    $statement->execute([
+        'title' => $title,
+        'body' => $body,
+        'preview' => $preview,
+        'checklist_json' => json_encode($checklist, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+        'color_key' => $color,
+        'updated_at' => gmdate('c'),
+        'public_id' => $publicId,
+    ]);
+    return rafabru_wall_read_note($publicId) ?? throw new RuntimeException('The note could not be reloaded.');
+}
+
+function rafabru_wall_set_checklist_item(string $publicId, mixed $claimedAuthor, int $index, bool $checked): array
+{
+    $existing = rafabru_wall_find_owned_row($publicId, $claimedAuthor);
+    if (($existing['type'] ?? 'write') !== 'check') {
+        throw new InvalidArgumentException('That note is not a checklist.');
+    }
+    $checklist = rafabru_wall_clean_checklist($existing['checklist'] ?? []);
+    if (!array_key_exists($index, $checklist) || trim((string) ($checklist[$index]['text'] ?? '')) === '') {
+        throw new InvalidArgumentException('That checklist item does not exist.');
+    }
+    $checklist[$index]['checked'] = $checked;
+    return rafabru_wall_update_note($publicId, $claimedAuthor, ['title' => $existing['title'], 'checklist' => $checklist]);
 }
 
 function rafabru_wall_turnstile_site_key(): string
@@ -246,10 +438,7 @@ function rafabru_wall_verify_turnstile(string $token): bool
         return false;
     }
 
-    $payload = [
-        'secret' => $secret,
-        'response' => $token,
-    ];
+    $payload = ['secret' => $secret, 'response' => $token];
     $remoteAddress = trim((string) ($_SERVER['REMOTE_ADDR'] ?? ''));
     if ($remoteAddress !== '') {
         $payload['remoteip'] = $remoteAddress;
@@ -257,7 +446,6 @@ function rafabru_wall_verify_turnstile(string $token): bool
 
     $endpoint = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
     $response = false;
-
     if (function_exists('curl_init')) {
         $curl = curl_init($endpoint);
         curl_setopt_array($curl, [
@@ -285,7 +473,6 @@ function rafabru_wall_verify_turnstile(string $token): bool
     if (!is_string($response) || $response === '') {
         return false;
     }
-
     $decoded = json_decode($response, true);
     return is_array($decoded) && ($decoded['success'] ?? false) === true;
 }

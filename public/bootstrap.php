@@ -74,23 +74,60 @@ if (str_starts_with($requestPath, '/admin/')) {
     ];
 
     if (in_array($requestPath, $publicChromePaths, true)) {
-        ob_start(static function (string $html): string {
-            if (str_contains($html, '</head>') && !str_contains($html, '/assets/css/navigation-polish.css')) {
-                $html = str_replace(
-                    '</head>',
-                    '    <link rel="stylesheet" href="/assets/css/navigation-polish.css?v=1">' . PHP_EOL . '</head>',
-                    $html
-                );
+        $isWritePage = str_starts_with($requestPath, '/write/');
+        ob_start(static function (string $html) use ($isWritePage): string {
+            if (str_contains($html, '</head>')) {
+                $styles = [
+                    '/assets/css/navigation-polish.css?v=2',
+                    '/assets/css/sections.css?v=2',
+                    '/assets/css/site-windows.css?v=1',
+                ];
+                if ($isWritePage) {
+                    $styles[] = '/assets/css/wall-extras.css?v=1';
+                }
+                $markup = '';
+                foreach ($styles as $href) {
+                    if (!str_contains($html, $href)) {
+                        $markup .= '    <link rel="stylesheet" href="' . $href . '">' . PHP_EOL;
+                    }
+                }
+                if ($markup !== '') {
+                    $html = str_replace('</head>', $markup . '</head>', $html);
+                }
+
+                if ($isWritePage && !str_contains($html, '/assets/js/wall-extras-preload.js')) {
+                    $needle = '<script src="/assets/js/write-wall.js';
+                    $position = strpos($html, $needle);
+                    if ($position !== false) {
+                        $html = substr_replace(
+                            $html,
+                            '<script src="/assets/js/wall-extras-preload.js?v=1" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/wall-extras-fixes.js?v=1" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/wall-title-guard.js?v=1" defer></script>' . PHP_EOL
+                            . '    ',
+                            $position,
+                            0
+                        );
+                    }
+                }
             }
 
-            if (str_contains($html, '</body>') && !str_contains($html, '/assets/js/site-chrome.js')) {
-                $html = str_replace(
-                    '</body>',
-                    '    <script src="/assets/js/site-chrome.js?v=1" defer></script>' . PHP_EOL
-                    . '    <script src="/assets/js/sections-i18n.js?v=1" defer></script>' . PHP_EOL
-                    . '</body>',
-                    $html
-                );
+            if (str_contains($html, '</body>')) {
+                $scripts = [
+                    '/assets/js/site-audio.js?v=1',
+                    '/assets/js/site-chrome.js?v=2',
+                    '/assets/js/site-windows.js?v=1',
+                    '/assets/js/sections-i18n.js?v=1',
+                ];
+                $markup = '';
+                foreach ($scripts as $src) {
+                    if (!str_contains($html, $src)) {
+                        $markup .= '    <script src="' . $src . '" defer></script>' . PHP_EOL;
+                    }
+                }
+                if ($markup !== '') {
+                    $html = str_replace('</body>', $markup . '</body>', $html);
+                }
             }
 
             return $html;

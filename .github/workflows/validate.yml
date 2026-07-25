@@ -48,6 +48,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf /tmp/rafabru-ci-data
           cat > /tmp/rafabru-ci-config.php <<'PHP'
           <?php
           return [
@@ -66,17 +67,82 @@ jobs:
           php -r '
           require "app/bootstrap.php";
           require "app/wall.php";
-          $note = rafabru_wall_create_note([
+
+          $write = rafabru_wall_create_note([
               "body" => "First page\n\nSecond paragraph",
-              "author" => "CI",
+              "author" => "CI Writer",
               "preview" => "Smoke test",
-              "title" => "",
+              "title" => "A notebook",
               "color" => "pink-2",
               "x" => 0.5,
               "y" => 300,
+              "rotation" => -1.2,
           ]);
-          if (($note["author"] ?? "") !== "CI" || count(rafabru_wall_list_notes()) !== 1) {
-              throw new RuntimeException("Wall smoke test failed.");
+          if (($write["type"] ?? "") !== "write" || abs(($write["rotation"] ?? 0) + 1.2) > 0.001) {
+              throw new RuntimeException("Write-note creation failed.");
           }
-          echo "wall smoke test passed\n";
+
+          $check = rafabru_wall_create_note([
+              "noteType" => "check",
+              "body" => "",
+              "author" => "CI Friend",
+              "title" => "Packing list",
+              "color" => "blue-2",
+              "x" => 0.35,
+              "y" => 520,
+              "rotation" => 1.4,
+              "checklist" => [
+                  ["text" => "Keys", "checked" => false],
+                  ["text" => "Wallet", "checked" => false],
+                  ["text" => "", "checked" => false],
+                  ["text" => "", "checked" => false],
+                  ["text" => "", "checked" => false],
+              ],
+          ]);
+          if (($check["type"] ?? "") !== "check" || count($check["checklist"] ?? []) < 5 || ($check["completed"] ?? true)) {
+              throw new RuntimeException("Checklist creation failed.");
+          }
+
+          $check = rafabru_wall_set_checklist_item($check["id"], "ci friend", 0, true);
+          $check = rafabru_wall_set_checklist_item($check["id"], "CI FRIEND", 1, true);
+          if (($check["completed"] ?? false) !== true) {
+              throw new RuntimeException("Checklist completion failed.");
+          }
+
+          $moved = rafabru_wall_move_note($write["id"], "ci writer", 0.66, 760);
+          if (abs(($moved["x"] ?? 0) - 0.66) > 0.001 || ($moved["y"] ?? 0) !== 760) {
+              throw new RuntimeException("Owner movement failed.");
+          }
+
+          $updated = rafabru_wall_update_note($write["id"], "CI Writer", [
+              "title" => "Edited notebook",
+              "body" => "Edited body",
+          ]);
+          if (($updated["title"] ?? "") !== "Edited notebook" || ($updated["body"] ?? "") !== "Edited body") {
+              throw new RuntimeException("Owner editing failed.");
+          }
+
+          try {
+              rafabru_wall_move_note($write["id"], "Someone else", 0.2, 200);
+              throw new RuntimeException("Wrong-name ownership was accepted.");
+          } catch (DomainException) {
+          }
+
+          if (count(rafabru_wall_list_notes()) !== 2) {
+              throw new RuntimeException("Wall list failed.");
+          }
+          echo "wall feature smoke test passed\n";
           '
+
+      - name: Smoke test public page injection
+        shell: bash
+        run: |
+          set -euo pipefail
+          export RAFABRU_CONFIG=/tmp/rafabru-ci-config.php
+          REQUEST_URI=/write/ php public/write/index.php > /tmp/rafabru-write.html
+          grep -q '/assets/js/wall-extras-preload.js' /tmp/rafabru-write.html
+          grep -q '/assets/js/wall-extras-fixes.js' /tmp/rafabru-write.html
+          grep -q '/assets/js/site-audio.js' /tmp/rafabru-write.html
+          grep -q '/assets/css/wall-extras.css' /tmp/rafabru-write.html
+          REQUEST_URI=/api/site-data.php php public/api/site-data.php > /tmp/rafabru-site-data.json
+          php -r 'json_decode(file_get_contents("/tmp/rafabru-site-data.json"), true, 512, JSON_THROW_ON_ERROR);'
