@@ -84,6 +84,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                 ];
                 if ($isWritePage) {
                     $styles[] = '/assets/css/wall-extras.css?v=1';
+                    $styles[] = '/assets/css/wall-hold-move.css?v=1';
                 }
                 $markup = '';
                 foreach ($styles as $href) {
