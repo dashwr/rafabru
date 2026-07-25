@@ -103,6 +103,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                             $html,
                             '<script src="/assets/js/wall-extras-preload.js?v=1" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/wall-extras-fixes.js?v=1" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/wall-hold-move.js?v=1" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/wall-title-guard.js?v=1" defer></script>' . PHP_EOL
                             . '    ',
                             $position,
