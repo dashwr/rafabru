@@ -86,7 +86,9 @@ if (str_starts_with($requestPath, '/admin/')) {
             if (str_contains($html, '</body>') && !str_contains($html, '/assets/js/site-chrome.js')) {
                 $html = str_replace(
                     '</body>',
-                    '    <script src="/assets/js/site-chrome.js?v=1" defer></script>' . PHP_EOL . '</body>',
+                    '    <script src="/assets/js/site-chrome.js?v=1" defer></script>' . PHP_EOL
+                    . '    <script src="/assets/js/sections-i18n.js?v=1" defer></script>' . PHP_EOL
+                    . '</body>',
                     $html
                 );
             }
