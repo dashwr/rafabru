@@ -124,7 +124,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                         $html = substr_replace(
                             $html,
                             '<script src="/assets/js/published-note-state.js?v=2" defer></script>' . PHP_EOL
-                            . '    <script src="/assets/js/published-note-event-guard.js?v=1" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/published-note-event-guard.js?v=2" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/wall-extras-preload.js?v=2" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/draft-checklist-repair.js?v=1" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/wall-core-repair.js?v=2" defer></script>' . PHP_EOL
