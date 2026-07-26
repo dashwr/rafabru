@@ -62,9 +62,10 @@
         const updateSheetHeight = () => {
             const rows = Math.max(5, extras.checklist.length);
             const sheetHeight = Math.max(260, 82 + rows * 32);
-            paper.style.height = `${sheetHeight}px`;
-            editor.style.height = `${sheetHeight}px`;
-            shell.style.minHeight = `${sheetHeight}px`;
+            const height = `${sheetHeight}px`;
+            if (paper.style.height !== height) paper.style.height = height;
+            if (editor.style.height !== height) editor.style.height = height;
+            if (shell.style.minHeight !== height) shell.style.minHeight = height;
         };
 
         const ensureTrailingRows = (editedIndex) => {
@@ -148,7 +149,7 @@
             if (hidden) {
                 if (element.style.display !== 'none') element.style.display = 'none';
             } else {
-                element.removeAttribute('hidden');
+                if (element.hasAttribute('hidden')) element.removeAttribute('hidden');
                 if (element.style.display !== 'block') element.style.display = 'block';
             }
         };
@@ -159,15 +160,16 @@
             [pagePrevious, pageNext, pageCounter].forEach((element) => {
                 if (!element) return;
                 element.classList.toggle('is-checklist-hidden', isChecklist);
-                element.hidden = isChecklist;
+                if (element.hidden !== isChecklist) element.hidden = isChecklist;
             });
         };
 
         const restoreNavigation = () => {
-            navigation.classList.remove('notebook-navigation--sheet');
+            if (navigation.classList.contains('notebook-navigation--sheet')) {
+                navigation.classList.remove('notebook-navigation--sheet');
+            }
             [pagePrevious, pageNext, pageCounter].forEach((element) => {
-                if (!element) return;
-                element.hidden = false;
+                if (element?.hidden) element.hidden = false;
             });
         };
 
@@ -181,7 +183,7 @@
                 localStorage.removeItem(LEGACY_WALL_DRAFT_KEY);
             } catch (_) {
             }
-            modal.classList.remove('is-draft-checklist');
+            if (modal.classList.contains('is-draft-checklist')) modal.classList.remove('is-draft-checklist');
             shell.style.removeProperty('min-height');
             editor.style.removeProperty('height');
             paper.style.removeProperty('height');
@@ -262,7 +264,9 @@
         const observer = new MutationObserver(() => {
             if (applying) return;
             if (isPublishedState()) {
-                modal.classList.remove('is-draft-checklist');
+                if (modal.classList.contains('is-draft-checklist')) {
+                    modal.classList.remove('is-draft-checklist');
+                }
                 restoreNavigation();
                 return;
             }
