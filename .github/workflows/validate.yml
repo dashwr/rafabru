@@ -233,14 +233,13 @@ jobs:
           grep -q '/assets/js/wall-note-click-controller.js?v=20260726-2' /tmp/rafabru-write.html
           grep -q '/assets/js/published-note-state.js?v=20260726-2' /tmp/rafabru-write.html
           grep -q '/assets/js/published-note-event-guard.js?v=20260726-2' /tmp/rafabru-write.html
-          grep -q '/assets/js/wall-extras-preload.js?v=20260726-3' /tmp/rafabru-write.html
+          grep -q '/wall-extras-script.php?v=20260726-4' /tmp/rafabru-write.html
           grep -q '/assets/js/draft-checklist-repair.js?v=20260726-2' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-core-repair.js?v=20260726-2' /tmp/rafabru-write.html
           grep -q '/assets/js/checklist-surface-controller.js?v=20260726-2' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-loader-watchdog.js?v=20260726-2' /tmp/rafabru-write.html
           grep -q '/assets/css/wall-note-click-controller.css?v=20260726-2' /tmp/rafabru-write.html
           ! grep -q '/assets/js/published-note-preclaim.js' /tmp/rafabru-write.html
-          grep -Fq 'RewriteRule ^assets/js/wall-extras-preload\.js$ wall-extras-script.php [L]' public/.htaccess
           grep -Fq 'FilesMatch "\\.(?:css|js)\\$"' public/.htaccess
           ! grep -q '/assets/js/wall-hold-move.js' /tmp/rafabru-write.html
           ! grep -q '/assets/js/wall-move-click-guard.js' /tmp/rafabru-write.html
@@ -248,14 +247,14 @@ jobs:
           migration_line=$(grep -n '/assets/js/wall-client-migrate.js' /tmp/rafabru-write.html | cut -d: -f1)
           click_line=$(grep -n '/assets/js/wall-note-click-controller.js' /tmp/rafabru-write.html | cut -d: -f1)
           published_line=$(grep -n '/assets/js/published-note-state.js' /tmp/rafabru-write.html | cut -d: -f1)
-          preload_line=$(grep -n '/assets/js/wall-extras-preload.js' /tmp/rafabru-write.html | cut -d: -f1)
+          extras_line=$(grep -n '/wall-extras-script.php' /tmp/rafabru-write.html | cut -d: -f1)
           write_line=$(grep -n '/assets/js/write-wall.js' /tmp/rafabru-write.html | cut -d: -f1)
           surface_line=$(grep -n '/assets/js/checklist-surface-controller.js' /tmp/rafabru-write.html | cut -d: -f1)
           watchdog_line=$(grep -n '/assets/js/wall-loader-watchdog.js' /tmp/rafabru-write.html | cut -d: -f1)
           test "$migration_line" -lt "$click_line"
           test "$click_line" -lt "$published_line"
-          test "$published_line" -lt "$preload_line"
-          test "$preload_line" -lt "$write_line"
+          test "$published_line" -lt "$extras_line"
+          test "$extras_line" -lt "$write_line"
           test "$write_line" -lt "$surface_line"
           test "$surface_line" -lt "$watchdog_line"
           REQUEST_URI=/api/site-data.php php public/api/site-data.php > /tmp/rafabru-site-data.json
