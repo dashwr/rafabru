@@ -106,6 +106,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                     $styles[] = '/assets/css/wall-extras.css?v=2';
                     $styles[] = '/assets/css/wall-core-repair.css?v=3';
                     $styles[] = '/assets/css/published-notes.css?v=2';
+                    $styles[] = '/assets/css/checklist-surface-controller.css?v=1';
                 }
                 $markup = '';
                 foreach ($styles as $href) {
@@ -145,6 +146,9 @@ if (str_starts_with($requestPath, '/admin/')) {
                     '/assets/js/site-internal-links.js?v=1',
                     '/assets/js/sections-i18n.js?v=1',
                 ];
+                if ($isWritePage) {
+                    $scripts[] = '/assets/js/checklist-surface-controller.js?v=1';
+                }
                 $markup = '';
                 foreach ($scripts as $src) {
                     if (!str_contains($html, $src)) {
