@@ -97,3 +97,28 @@ jobs:
           grep -Fq 'Browser post-it' /tmp/rafabru-dom.html
           grep -Fq 'class="wall-postit' /tmp/rafabru-dom.html
           grep -Eq 'data-wall-loading[^>]*hidden|hidden[^>]*data-wall-loading' /tmp/rafabru-dom.html
+
+      - name: Inspect production wall responses
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 3 --retry-delay 3 \
+            -D /tmp/live-write-headers.txt \
+            https://rafabru.duckdns.org/write/ \
+            -o /tmp/live-write.html
+          curl --fail --silent --show-error --location --retry 3 --retry-delay 3 \
+            -D /tmp/live-api-headers.txt \
+            https://rafabru.duckdns.org/api/wall/list.php \
+            -o /tmp/live-wall.json
+          echo '--- Live Write headers ---'
+          cat /tmp/live-write-headers.txt
+          echo '--- Live wall API headers ---'
+          cat /tmp/live-api-headers.txt
+          echo '--- Live wall API body ---'
+          cat /tmp/live-wall.json
+          php -r '
+          $payload = json_decode(file_get_contents("/tmp/live-wall.json"), true, 512, JSON_THROW_ON_ERROR);
+          if (($payload["ok"] ?? false) !== true) throw new RuntimeException("Production wall API is not healthy.");
+          echo "Production notes: " . count($payload["notes"] ?? []) . PHP_EOL;
+          '
+          grep -q '/assets/js/checklist-surface-controller.js?v=2' /tmp/live-write.html
