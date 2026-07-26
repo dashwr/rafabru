@@ -1,0 +1,9 @@
+/* A note click opens it. Movement only belongs to the separate arrow control. */
+body:not(.is-moving-owned-note) .wall-postit,
+body:not(.is-moving-owned-note) .wall-postit.is-owned-note {
+    cursor: pointer !important;
+}
+
+.wall-note-move-control {
+    cursor: move !important;
+}
