@@ -1,3 +1,4 @@
+import {writeFile} from 'node:fs/promises';
 import puppeteer from 'puppeteer-core';
 
 const executablePath = process.argv[2];
@@ -14,9 +15,24 @@ const page = await browser.newPage();
 page.setDefaultTimeout(12000);
 const pageErrors = [];
 page.on('pageerror', (error) => pageErrors.push(String(error?.stack || error)));
-page.on('console', (message) => {
-    if (message.type() === 'error') console.log(`browser console: ${message.text()}`);
-});
+page.on('console', (message) => console.log(`browser ${message.type()}: ${message.text()}`));
+
+const snapshot = async (stage) => {
+    const state = await page.evaluate(() => ({
+        url: window.location.href,
+        bodyClass: document.body.className,
+        modalLayerHidden: document.querySelector('[data-modal-layer]')?.hidden,
+        notebookHidden: document.querySelector('[data-notebook-modal]')?.hidden,
+        notebookStatus: document.querySelector('[data-notebook-status]')?.textContent,
+        noteCount: document.querySelectorAll('.wall-postit').length,
+        movingNoteCount: document.querySelectorAll('.wall-postit.is-being-moved').length,
+        moveControlCount: document.querySelectorAll('[data-move-note]').length,
+        identity: localStorage.getItem('rafabru_wall_identity_v1'),
+        viewerFunction: typeof window.rafabruOpenPublishedNote,
+    }));
+    console.log(`${stage}: ${JSON.stringify(state)}`);
+    return state;
+};
 
 const assertViewerOpen = async (label) => {
     await page.waitForFunction(() => {
@@ -29,12 +45,8 @@ const assertViewerOpen = async (label) => {
             && status?.textContent.includes('Browser post-it');
     });
 
-    const state = await page.evaluate(() => ({
-        moving: document.body.classList.contains('is-moving-owned-note'),
-        noteOpen: document.body.classList.contains('is-published-note-open'),
-        modalHidden: document.querySelector('[data-notebook-modal]')?.hidden,
-    }));
-    if (state.moving || !state.noteOpen || state.modalHidden) {
+    const state = await snapshot(label);
+    if (state.bodyClass.includes('is-moving-owned-note') || state.notebookHidden || state.modalLayerHidden) {
         throw new Error(`${label}: note click entered the wrong state: ${JSON.stringify(state)}`);
     }
 };
@@ -42,6 +54,7 @@ const assertViewerOpen = async (label) => {
 try {
     await page.goto(targetUrl, {waitUntil: 'domcontentloaded', timeout: 15000});
     await page.waitForSelector('.wall-postit');
+    await snapshot('wall loaded');
 
     await page.click('.wall-postit');
     await assertViewerOpen('public note click');
@@ -52,6 +65,7 @@ try {
     await page.reload({waitUntil: 'domcontentloaded', timeout: 15000});
     await page.waitForSelector('.wall-postit');
     await page.waitForSelector('[data-move-note]', {visible: true});
+    await snapshot('owner wall loaded');
 
     await page.click('.wall-postit');
     await assertViewerOpen('owner note click');
@@ -60,12 +74,10 @@ try {
 
     await page.click('[data-move-note]');
     await page.waitForFunction(() => document.body.classList.contains('is-moving-owned-note'));
-    const movedState = await page.evaluate(() => ({
-        moving: document.body.classList.contains('is-moving-owned-note'),
-        viewer: document.body.classList.contains('is-published-note-open'),
-        movedCard: Boolean(document.querySelector('.wall-postit.is-being-moved')),
-    }));
-    if (!movedState.moving || movedState.viewer || !movedState.movedCard) {
+    const movedState = await snapshot('move control click');
+    if (!movedState.bodyClass.includes('is-moving-owned-note')
+        || movedState.bodyClass.includes('is-published-note-open')
+        || movedState.movingNoteCount < 1) {
         throw new Error(`Move control entered the wrong state: ${JSON.stringify(movedState)}`);
     }
 
@@ -77,6 +89,12 @@ try {
     }
 
     console.log('note click and move-control smoke test passed');
+} catch (error) {
+    const state = await snapshot('failure').catch(() => ({}));
+    await writeFile('/tmp/note-click-state.json', JSON.stringify({error: String(error?.stack || error), state, pageErrors}, null, 2));
+    await page.screenshot({path: '/tmp/note-click-failure.png', fullPage: true}).catch(() => {});
+    console.error(error?.stack || error);
+    throw error;
 } finally {
     await browser.close();
 }
