@@ -106,7 +106,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                     $styles[] = '/assets/css/wall-extras.css?v=2';
                     $styles[] = '/assets/css/wall-core-repair.css?v=3';
                     $styles[] = '/assets/css/published-notes.css?v=2';
-                    $styles[] = '/assets/css/checklist-surface-controller.css?v=1';
+                    $styles[] = '/assets/css/checklist-surface-controller.css?v=2';
                 }
                 $markup = '';
                 foreach ($styles as $href) {
@@ -124,7 +124,8 @@ if (str_starts_with($requestPath, '/admin/')) {
                     if ($position !== false) {
                         $html = substr_replace(
                             $html,
-                            '<script src="/assets/js/published-note-state.js?v=2" defer></script>' . PHP_EOL
+                            '<script src="/assets/js/published-note-preclaim.js?v=1" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/published-note-state.js?v=2" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/published-note-event-guard.js?v=2" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/wall-extras-preload.js?v=2" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/draft-checklist-repair.js?v=1" defer></script>' . PHP_EOL
@@ -147,7 +148,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                     '/assets/js/sections-i18n.js?v=1',
                 ];
                 if ($isWritePage) {
-                    $scripts[] = '/assets/js/checklist-surface-controller.js?v=1';
+                    $scripts[] = '/assets/js/checklist-surface-controller.js?v=2';
                 }
                 $markup = '';
                 foreach ($scripts as $src) {
