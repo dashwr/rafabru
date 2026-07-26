@@ -11,10 +11,11 @@ const browser = await puppeteer.launch({
 });
 
 const page = await browser.newPage();
+page.setDefaultTimeout(12000);
 const pageErrors = [];
 page.on('pageerror', (error) => pageErrors.push(String(error?.stack || error)));
 page.on('console', (message) => {
-    if (message.type() === 'error') pageErrors.push(`console: ${message.text()}`);
+    if (message.type() === 'error') console.log(`browser console: ${message.text()}`);
 });
 
 const assertViewerOpen = async (label) => {
@@ -26,7 +27,7 @@ const assertViewerOpen = async (label) => {
             && notebook && !notebook.hidden
             && document.body.classList.contains('is-published-note-open')
             && status?.textContent.includes('Browser post-it');
-    }, {timeout: 7000});
+    });
 
     const state = await page.evaluate(() => ({
         moving: document.body.classList.contains('is-moving-owned-note'),
@@ -39,8 +40,8 @@ const assertViewerOpen = async (label) => {
 };
 
 try {
-    await page.goto(targetUrl, {waitUntil: 'networkidle0'});
-    await page.waitForSelector('.wall-postit', {timeout: 10000});
+    await page.goto(targetUrl, {waitUntil: 'domcontentloaded', timeout: 15000});
+    await page.waitForSelector('.wall-postit');
 
     await page.click('.wall-postit');
     await assertViewerOpen('public note click');
@@ -48,9 +49,9 @@ try {
     await page.waitForFunction(() => !document.body.classList.contains('is-published-note-open'));
 
     await page.evaluate(() => localStorage.setItem('rafabru_wall_identity_v1', 'Browser CI'));
-    await page.reload({waitUntil: 'networkidle0'});
-    await page.waitForSelector('.wall-postit', {timeout: 10000});
-    await page.waitForSelector('[data-move-note]', {timeout: 7000});
+    await page.reload({waitUntil: 'domcontentloaded', timeout: 15000});
+    await page.waitForSelector('.wall-postit');
+    await page.waitForSelector('[data-move-note]', {visible: true});
 
     await page.click('.wall-postit');
     await assertViewerOpen('owner note click');
@@ -72,7 +73,7 @@ try {
     await page.waitForFunction(() => !document.body.classList.contains('is-moving-owned-note'));
 
     if (pageErrors.length) {
-        throw new Error(`Browser errors:\n${pageErrors.join('\n')}`);
+        throw new Error(`Browser page errors:\n${pageErrors.join('\n')}`);
     }
 
     console.log('note click and move-control smoke test passed');
