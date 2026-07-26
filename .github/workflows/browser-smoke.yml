@@ -1,0 +1,99 @@
+name: browser smoke
+
+on:
+  push:
+    branches:
+      - 'fix/mural-runtime'
+  pull_request:
+    paths:
+      - 'public/**'
+      - 'app/**'
+      - '.github/workflows/browser-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  mural:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          extensions: pdo_sqlite, sqlite3, mbstring, curl
+
+      - name: Prepare local wall data
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/rafabru-browser-data
+          cat > /tmp/rafabru-browser-config.php <<'PHP'
+          <?php
+          return [
+              'data_dir' => '/tmp/rafabru-browser-data',
+              'session_name' => 'rafabru_browser',
+              'session_timeout' => 1800,
+              'max_upload_bytes' => 26214400,
+              'admin_username' => 'serafim',
+              'admin_password_hash' => 'REPLACE_WITH_PASSWORD_HASH',
+              'turnstile_site_key' => '',
+              'turnstile_secret_key' => '',
+          ];
+          PHP
+          export RAFABRU_CONFIG=/tmp/rafabru-browser-config.php
+          php scripts/migrate-wall.php
+          php -r '
+          require "app/bootstrap.php";
+          require "app/wall.php";
+          rafabru_wall_create_note([
+              "body" => "Browser-rendered notebook",
+              "author" => "Browser CI",
+              "preview" => "Visible mural card",
+              "title" => "Browser post-it",
+              "color" => "pink-2",
+              "x" => 0.5,
+              "y" => 300,
+              "rotation" => -0.7,
+          ]);
+          '
+
+      - name: Execute Write page in Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          export RAFABRU_CONFIG=/tmp/rafabru-browser-config.php
+          php -S 127.0.0.1:8099 -t public > /tmp/rafabru-php.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8099/write/ >/dev/null && break
+            sleep 0.2
+          done
+          chrome_bin="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$chrome_bin"
+          "$chrome_bin" \
+            --headless=new \
+            --no-sandbox \
+            --disable-gpu \
+            --disable-dev-shm-usage \
+            --enable-logging=stderr \
+            --v=1 \
+            --virtual-time-budget=8000 \
+            --dump-dom \
+            http://127.0.0.1:8099/write/ \
+            > /tmp/rafabru-dom.html \
+            2> /tmp/rafabru-chrome.log || true
+          echo '--- Chrome log ---'
+          cat /tmp/rafabru-chrome.log
+          echo '--- PHP log ---'
+          cat /tmp/rafabru-php.log
+          echo '--- Rendered wall markers ---'
+          grep -nE 'wall-postit|wall-loading|Browser post-it' /tmp/rafabru-dom.html || true
+          grep -Fq 'Browser post-it' /tmp/rafabru-dom.html
+          grep -Fq 'class="wall-postit' /tmp/rafabru-dom.html
+          grep -Eq 'data-wall-loading[^>]*hidden|hidden[^>]*data-wall-loading' /tmp/rafabru-dom.html
