@@ -1,20 +1,14 @@
 (() => {
     'use strict';
 
-    const movementIsActuallyActive = () => Boolean(
-        document.querySelector('.wall-postit.is-being-moved')
-        || window.rafabruWallExtras?.moving?.element
-    );
+    let activeMoveGesture = false;
 
-    const clearStaleMovementState = () => {
-        if (movementIsActuallyActive()) return false;
-
+    const clearMovementVisuals = () => {
         document.body.classList.remove('is-moving-owned-note');
         document.querySelectorAll('.wall-postit.is-being-moved').forEach((note) => {
             note.classList.remove('is-being-moved');
         });
         if (window.rafabruWallExtras) window.rafabruWallExtras.moving = null;
-        return true;
     };
 
     const openNote = (noteId) => {
@@ -34,22 +28,45 @@
     };
 
     document.addEventListener('click', (event) => {
+        const moveControl = event.target.closest?.('[data-move-note]');
+        if (moveControl) {
+            activeMoveGesture = true;
+            window.setTimeout(() => {
+                if (!document.body.classList.contains('is-moving-owned-note')) activeMoveGesture = false;
+            }, 0);
+            return;
+        }
+
         const note = event.target.closest?.('.wall-postit');
         if (!note) return;
 
-        /* A real move operation owns the placement click. A stale cursor class does not. */
-        if (movementIsActuallyActive()) return;
+        /* A real move operation owns the placement click. Stale CSS classes do not. */
+        if (activeMoveGesture && document.body.classList.contains('is-moving-owned-note')) return;
 
         event.preventDefault();
         event.stopImmediatePropagation();
-        clearStaleMovementState();
+        activeMoveGesture = false;
+        clearMovementVisuals();
 
         const noteId = String(note.dataset.noteId || '');
         if (!noteId) return;
         openNote(noteId);
     }, true);
 
-    const clearOnReady = () => clearStaleMovementState();
+    const bodyObserver = new MutationObserver(() => {
+        if (document.body.classList.contains('is-moving-owned-note')) return;
+        activeMoveGesture = false;
+        document.querySelectorAll('.wall-postit.is-being-moved').forEach((note) => {
+            note.classList.remove('is-being-moved');
+        });
+    });
+
+    const clearOnReady = () => {
+        activeMoveGesture = false;
+        clearMovementVisuals();
+        bodyObserver.observe(document.body, {attributes: true, attributeFilter: ['class']});
+    };
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', clearOnReady, {once: true});
     } else {
