@@ -2,7 +2,9 @@
     'use strict';
 
     const TYPE_KEY = 'rafabru_note_type_v1';
-    const DRAFT_KEY = 'rafabru_checklist_draft_v1';
+    const CHECKLIST_DRAFT_KEY = 'rafabru_checklist_draft_v1';
+    const WALL_DRAFT_KEY = 'rafabru_wall_draft_v2';
+    const LEGACY_WALL_DRAFT_KEY = 'rafabru_wall_draft_v1';
 
     const setup = () => {
         const extras = window.rafabruWallExtras;
@@ -11,6 +13,9 @@
         const viewport = document.querySelector('[data-notebook-viewport]');
         const navigation = document.querySelector('.notebook-navigation');
         const createButton = document.querySelector('[data-create-note]');
+        const pagePrevious = navigation?.querySelector('[data-page-previous]');
+        const pageNext = navigation?.querySelector('[data-page-next]');
+        const pageCounter = navigation?.querySelector('[data-page-counter]');
         let editor = shell?.querySelector('.checklist-editor');
 
         if (!extras || !modal || !shell || !viewport || !navigation || !createButton) return;
@@ -23,12 +28,18 @@
             shell.appendChild(editor);
         }
 
+        const paper = editor.querySelector('.checklist-editor__paper');
         const itemsRoot = editor.querySelector('[data-checklist-items]');
-        if (!itemsRoot) return;
+        if (!paper || !itemsRoot) return;
 
         const localT = (english, portuguese) => document.documentElement.lang === 'pt-BR' ? portuguese : english;
         let applying = false;
         let scheduled = false;
+
+        const isPublishedState = () => document.body.classList.contains('is-published-note-open')
+            || modal.classList.contains('is-published-unified');
+
+        const emptyChecklist = () => Array.from({length: 5}, () => ({text: '', checked: false}));
 
         const normalizeItems = () => {
             const source = Array.isArray(extras.checklist) ? extras.checklist : [];
@@ -43,9 +54,38 @@
             normalizeItems();
             try {
                 localStorage.setItem(TYPE_KEY, extras.noteType === 'check' ? 'check' : 'write');
-                localStorage.setItem(DRAFT_KEY, JSON.stringify(extras.checklist));
+                localStorage.setItem(CHECKLIST_DRAFT_KEY, JSON.stringify(extras.checklist));
             } catch (_) {
             }
+        };
+
+        const updateSheetHeight = () => {
+            const rows = Math.max(5, extras.checklist.length);
+            const sheetHeight = Math.max(260, 82 + rows * 32);
+            paper.style.height = `${sheetHeight}px`;
+            editor.style.height = `${sheetHeight}px`;
+            shell.style.minHeight = `${sheetHeight}px`;
+        };
+
+        const ensureTrailingRows = (editedIndex) => {
+            if (extras.checklist.length >= 100) return false;
+            const lastIndex = extras.checklist.length - 1;
+            if (editedIndex < lastIndex - 1) return false;
+            if (String(extras.checklist[editedIndex]?.text || '').trim() === '') return false;
+
+            let trailingEmpty = 0;
+            for (let index = extras.checklist.length - 1; index >= 0; index -= 1) {
+                if (String(extras.checklist[index]?.text || '').trim() !== '') break;
+                trailingEmpty += 1;
+            }
+
+            let changed = false;
+            while (trailingEmpty < 2 && extras.checklist.length < 100) {
+                extras.checklist.push({text: '', checked: false});
+                trailingEmpty += 1;
+                changed = true;
+            }
+            return changed;
         };
 
         const renderRows = (focusIndex = null) => {
@@ -80,19 +120,20 @@
                         extras.checklist[index].checked = false;
                         row.classList.remove('is-checked');
                     }
-                    if (index === extras.checklist.length - 2 && input.value.trim() !== '' && extras.checklist.length < 100) {
-                        extras.checklist.push({text: '', checked: false});
-                        persist();
+                    const expanded = ensureTrailingRows(index);
+                    persist();
+                    if (expanded) {
                         renderRows(index);
                         return;
                     }
-                    persist();
+                    updateSheetHeight();
                 });
 
                 row.append(checkbox, input);
                 itemsRoot.appendChild(row);
             });
 
+            updateSheetHeight();
             if (focusIndex !== null) {
                 requestAnimationFrame(() => {
                     const input = itemsRoot.querySelectorAll('input[type="text"]')[focusIndex];
@@ -114,13 +155,48 @@
 
         const toggleNavigation = (isChecklist) => {
             navigation.classList.toggle('notebook-navigation--checklist', isChecklist);
-            navigation.querySelectorAll('[data-page-previous], [data-page-next], [data-page-counter]').forEach((element) => {
+            navigation.classList.toggle('notebook-navigation--sheet', isChecklist);
+            [pagePrevious, pageNext, pageCounter].forEach((element) => {
+                if (!element) return;
                 element.classList.toggle('is-checklist-hidden', isChecklist);
+                element.hidden = isChecklist;
             });
         };
 
+        const restoreNavigation = () => {
+            navigation.classList.remove('notebook-navigation--sheet');
+            [pagePrevious, pageNext, pageCounter].forEach((element) => {
+                if (!element) return;
+                element.hidden = false;
+            });
+        };
+
+        const resetDiscardedDraft = () => {
+            extras.noteType = 'write';
+            extras.checklist = emptyChecklist();
+            try {
+                localStorage.removeItem(TYPE_KEY);
+                localStorage.removeItem(CHECKLIST_DRAFT_KEY);
+                localStorage.removeItem(WALL_DRAFT_KEY);
+                localStorage.removeItem(LEGACY_WALL_DRAFT_KEY);
+            } catch (_) {
+            }
+            modal.classList.remove('is-draft-checklist');
+            shell.style.removeProperty('min-height');
+            editor.style.removeProperty('height');
+            paper.style.removeProperty('height');
+            setHidden(editor, true);
+            setHidden(viewport, false);
+            toggleNavigation(false);
+            const writeToggle = navigation.querySelector('[data-note-type="write"]');
+            const checkToggle = navigation.querySelector('[data-note-type="check"]');
+            if (writeToggle) writeToggle.checked = true;
+            if (checkToggle) checkToggle.checked = false;
+            renderRows();
+        };
+
         const applyDraftSurface = (requestedType = '') => {
-            if (applying || modal.classList.contains('is-published-unified')) return;
+            if (applying || isPublishedState()) return;
             applying = true;
             try {
                 const writeToggle = navigation.querySelector('[data-note-type="write"]');
@@ -139,7 +215,13 @@
                 setHidden(editor, !isChecklist);
                 toggleNavigation(isChecklist);
 
-                if (isChecklist) renderRows();
+                if (isChecklist) {
+                    renderRows();
+                } else {
+                    shell.style.removeProperty('min-height');
+                    editor.style.removeProperty('height');
+                    paper.style.removeProperty('height');
+                }
                 persist();
             } finally {
                 applying = false;
@@ -157,10 +239,15 @@
 
         document.addEventListener('change', (event) => {
             const toggle = event.target.closest?.('[data-note-type]');
-            if (!toggle || modal.classList.contains('is-published-unified')) return;
+            if (!toggle || isPublishedState()) return;
             event.preventDefault();
             event.stopImmediatePropagation();
             applyDraftSurface(toggle.matches('[data-note-type="check"]') ? 'check' : 'write');
+        }, true);
+
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest?.('[data-confirm-discard]')) return;
+            resetDiscardedDraft();
         }, true);
 
         createButton.addEventListener('click', () => {
@@ -173,18 +260,24 @@
         }, true);
 
         const observer = new MutationObserver(() => {
-            if (applying || modal.classList.contains('is-published-unified')) return;
+            if (applying) return;
+            if (isPublishedState()) {
+                modal.classList.remove('is-draft-checklist');
+                restoreNavigation();
+                return;
+            }
             if (!modal.hidden && (extras.noteType === 'check' || navigation.querySelector('[data-note-type="check"]')?.checked)) {
                 scheduleApply('check');
             }
         });
         observer.observe(modal, {attributes: true, attributeFilter: ['hidden', 'class']});
+        observer.observe(document.body, {attributes: true, attributeFilter: ['class']});
         observer.observe(editor, {attributes: true, attributeFilter: ['hidden', 'style']});
         observer.observe(viewport, {attributes: true, attributeFilter: ['hidden', 'style']});
 
         window.addEventListener('rafabru-wall-note', (event) => {
-            if (event.detail?.type !== 'check' || extras.noteType !== 'check') return;
-            extras.checklist = Array.from({length: 5}, () => ({text: '', checked: false}));
+            if (event.detail?.type !== 'check' || extras.noteType !== 'check' || isPublishedState()) return;
+            extras.checklist = emptyChecklist();
             renderRows();
             persist();
         });
@@ -193,6 +286,7 @@
             show: () => applyDraftSurface('check'),
             hide: () => applyDraftSurface('write'),
             refresh: () => applyDraftSurface(extras.noteType),
+            discard: resetDiscardedDraft,
         };
     };
 
