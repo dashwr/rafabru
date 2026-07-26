@@ -119,7 +119,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                     $html = str_replace('</head>', $markup . '</head>', $html);
                 }
 
-                if ($isWritePage && !str_contains($html, '/wall-extras-script.php')) {
+                if ($isWritePage && !str_contains($html, '/assets/js/wall-extras-preload.js')) {
                     $needle = '<script src="/assets/js/write-wall.js';
                     $position = strpos($html, $needle);
                     if ($position !== false) {
@@ -129,7 +129,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                             . '    <script src="/assets/js/wall-note-click-controller.js?v=20260726-2" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/published-note-state.js?v=20260726-2" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/published-note-event-guard.js?v=20260726-2" defer></script>' . PHP_EOL
-                            . '    <script src="/wall-extras-script.php?v=20260726-3" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/wall-extras-preload.js?v=20260726-3" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/draft-checklist-repair.js?v=20260726-2" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/wall-core-repair.js?v=20260726-2" defer></script>' . PHP_EOL
                             . '    <script src="/assets/js/wall-title-guard.js?v=20260726-2" defer></script>' . PHP_EOL
