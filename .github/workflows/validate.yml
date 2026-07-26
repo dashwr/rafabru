@@ -41,6 +41,7 @@ jobs:
           grep -Fq "notebookModal.classList.add('is-published-unified')" public/assets/js/published-note-state.js
           grep -Fq "renderWritingPages" public/assets/js/published-note-state.js
           grep -Fq "renderChecklist" public/assets/js/published-note-state.js
+          grep -Fq ".notebook-modal.is-published-unified" public/assets/js/published-note-event-guard.js
           ! grep -Fq "published-note-layer" public/assets/js/published-note-state.js
 
       - name: Validate JSON templates
@@ -219,7 +220,7 @@ jobs:
           export RAFABRU_CONFIG=/tmp/rafabru-ci-config.php
           REQUEST_URI=/write/ php public/write/index.php > /tmp/rafabru-write.html
           grep -q '/assets/js/published-note-state.js?v=2' /tmp/rafabru-write.html
-          grep -q '/assets/js/published-note-event-guard.js?v=1' /tmp/rafabru-write.html
+          grep -q '/assets/js/published-note-event-guard.js?v=2' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-extras-preload.js?v=2' /tmp/rafabru-write.html
           grep -q '/assets/js/draft-checklist-repair.js?v=1' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-core-repair.js?v=2' /tmp/rafabru-write.html
