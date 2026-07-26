@@ -107,6 +107,7 @@ if (str_starts_with($requestPath, '/admin/')) {
                     $styles[] = '/assets/css/wall-core-repair.css?v=20260726-2';
                     $styles[] = '/assets/css/published-notes.css?v=20260726-2';
                     $styles[] = '/assets/css/checklist-surface-controller.css?v=20260726-2';
+                    $styles[] = '/assets/css/wall-note-click-controller.css?v=20260726-2';
                 }
                 $markup = '';
                 foreach ($styles as $href) {
