@@ -38,7 +38,11 @@ jobs:
           grep -Fq "normalized.includes('⟦RAFABRU_PAGE_BREAK⟧')" /tmp/rafabru-write-wall.generated.js
           grep -Fq "window.rafabruOpenPublishedNote" /tmp/rafabru-write-wall.generated.js
           grep -Fq "Add at least one checklist item before publishing." public/assets/js/draft-checklist-repair.js
-          grep -Fq "Published checklist" public/assets/js/published-note-state.js
+          grep -Fq "notebookModal.classList.add('is-published-unified')" public/assets/js/published-note-state.js
+          grep -Fq "renderWritingPages" public/assets/js/published-note-state.js
+          grep -Fq "renderChecklist" public/assets/js/published-note-state.js
+          grep -Fq ".notebook-modal.is-published-unified" public/assets/js/published-note-event-guard.js
+          ! grep -Fq "published-note-layer" public/assets/js/published-note-state.js
 
       - name: Validate JSON templates
         run: |
@@ -215,18 +219,18 @@ jobs:
           set -euo pipefail
           export RAFABRU_CONFIG=/tmp/rafabru-ci-config.php
           REQUEST_URI=/write/ php public/write/index.php > /tmp/rafabru-write.html
-          grep -q '/assets/js/published-note-state.js?v=1' /tmp/rafabru-write.html
-          grep -q '/assets/js/published-note-event-guard.js?v=1' /tmp/rafabru-write.html
+          grep -q '/assets/js/published-note-state.js?v=2' /tmp/rafabru-write.html
+          grep -q '/assets/js/published-note-event-guard.js?v=2' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-extras-preload.js?v=2' /tmp/rafabru-write.html
           grep -q '/assets/js/draft-checklist-repair.js?v=1' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-core-repair.js?v=2' /tmp/rafabru-write.html
-          grep -q '/assets/css/published-notes.css?v=1' /tmp/rafabru-write.html
+          grep -q '/assets/css/published-notes.css?v=2' /tmp/rafabru-write.html
           grep -q '/assets/css/wall-core-repair.css?v=3' /tmp/rafabru-write.html
           grep -q '/assets/js/site-internal-links.js?v=1' /tmp/rafabru-write.html
           grep -q '/assets/css/site-internal-links.css?v=1' /tmp/rafabru-write.html
+          grep -Fq '.notebook-modal.is-published-unified .notebook-flow' public/assets/css/published-notes.css
+          grep -Fq '.notebook-modal.is-published-checklist .checklist-editor__paper' public/assets/css/published-notes.css
           grep -Fq '.checklist-editor:not([hidden])' public/assets/css/wall-core-repair.css
-          grep -Fq 'width: var(--spread-width)' public/assets/css/wall-core-repair.css
-          grep -Fq 'height: var(--page-height)' public/assets/css/wall-core-repair.css
           ! grep -q '/assets/js/wall-hold-move.js' /tmp/rafabru-write.html
           ! grep -q '/assets/js/wall-move-click-guard.js' /tmp/rafabru-write.html
           ! grep -q '/assets/js/wall-extras-fixes.js' /tmp/rafabru-write.html
