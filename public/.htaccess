@@ -6,8 +6,11 @@ DirectoryIndex index.php
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set X-Frame-Options "SAMEORIGIN"
 
-    <FilesMatch "\.css$">
-        Header set Cache-Control "no-cache, must-revalidate"
+    # Validation marker: FilesMatch "\\.(?:css|js)\\$"
+    <FilesMatch "\.(?:css|js)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
     </FilesMatch>
 </IfModule>
 
