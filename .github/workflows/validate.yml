@@ -34,6 +34,9 @@ jobs:
           find public/assets/js scripts -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -n1 node --check
           php public/write-script.php > /tmp/rafabru-write-wall.generated.js
           node --check /tmp/rafabru-write-wall.generated.js
+          php public/wall-extras-script.php > /tmp/rafabru-wall-extras.generated.js
+          node --check /tmp/rafabru-wall-extras.generated.js
+          grep -Fq "queueMicrotask(updateIdentityPanel)" /tmp/rafabru-wall-extras.generated.js
           grep -Fq "expandedPages" /tmp/rafabru-write-wall.generated.js
           grep -Fq "normalized.includes('⟦RAFABRU_PAGE_BREAK⟧')" /tmp/rafabru-write-wall.generated.js
           grep -Fq "window.rafabruOpenPublishedNote" /tmp/rafabru-write-wall.generated.js
@@ -230,13 +233,14 @@ jobs:
           grep -q '/assets/js/wall-note-click-controller.js?v=20260726-2' /tmp/rafabru-write.html
           grep -q '/assets/js/published-note-state.js?v=20260726-2' /tmp/rafabru-write.html
           grep -q '/assets/js/published-note-event-guard.js?v=20260726-2' /tmp/rafabru-write.html
-          grep -q '/assets/js/wall-extras-preload.js?v=20260726-2' /tmp/rafabru-write.html
+          grep -q '/assets/js/wall-extras-preload.js?v=20260726-3' /tmp/rafabru-write.html
           grep -q '/assets/js/draft-checklist-repair.js?v=20260726-2' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-core-repair.js?v=20260726-2' /tmp/rafabru-write.html
           grep -q '/assets/js/checklist-surface-controller.js?v=20260726-2' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-loader-watchdog.js?v=20260726-2' /tmp/rafabru-write.html
           grep -q '/assets/css/wall-note-click-controller.css?v=20260726-2' /tmp/rafabru-write.html
           ! grep -q '/assets/js/published-note-preclaim.js' /tmp/rafabru-write.html
+          grep -Fq 'RewriteRule ^assets/js/wall-extras-preload\.js$ wall-extras-script.php [L]' public/.htaccess
           grep -Fq 'FilesMatch "\\.(?:css|js)\\$"' public/.htaccess
           ! grep -q '/assets/js/wall-hold-move.js' /tmp/rafabru-write.html
           ! grep -q '/assets/js/wall-move-click-guard.js' /tmp/rafabru-write.html
