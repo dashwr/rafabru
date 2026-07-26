@@ -3,12 +3,22 @@
 
     let activeMoveGesture = false;
 
+    const movementIsActuallyActive = () => activeMoveGesture
+        && document.body.classList.contains('is-moving-owned-note');
+
     const clearMovementVisuals = () => {
         document.body.classList.remove('is-moving-owned-note');
         document.querySelectorAll('.wall-postit.is-being-moved').forEach((note) => {
             note.classList.remove('is-being-moved');
         });
         if (window.rafabruWallExtras) window.rafabruWallExtras.moving = null;
+    };
+
+    const clearStaleMovementState = () => {
+        if (movementIsActuallyActive()) return false;
+        activeMoveGesture = false;
+        clearMovementVisuals();
+        return true;
     };
 
     const openNote = (noteId) => {
@@ -41,12 +51,11 @@
         if (!note) return;
 
         /* A real move operation owns the placement click. Stale CSS classes do not. */
-        if (activeMoveGesture && document.body.classList.contains('is-moving-owned-note')) return;
+        if (movementIsActuallyActive()) return;
 
         event.preventDefault();
         event.stopImmediatePropagation();
-        activeMoveGesture = false;
-        clearMovementVisuals();
+        clearStaleMovementState();
 
         const noteId = String(note.dataset.noteId || '');
         if (!noteId) return;
