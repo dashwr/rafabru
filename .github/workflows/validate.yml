@@ -42,6 +42,10 @@ jobs:
           grep -Fq "renderWritingPages" public/assets/js/published-note-state.js
           grep -Fq "renderChecklist" public/assets/js/published-note-state.js
           grep -Fq ".notebook-modal.is-published-unified" public/assets/js/published-note-event-guard.js
+          grep -Fq "claimPublishedNotebook" public/assets/js/published-note-preclaim.js
+          grep -Fq "ensureTrailingRows" public/assets/js/checklist-surface-controller.js
+          grep -Fq "resetDiscardedDraft" public/assets/js/checklist-surface-controller.js
+          grep -Fq "localStorage.removeItem(CHECKLIST_DRAFT_KEY)" public/assets/js/checklist-surface-controller.js
           ! grep -Fq "published-note-layer" public/assets/js/published-note-state.js
 
       - name: Validate JSON templates
@@ -219,32 +223,36 @@ jobs:
           set -euo pipefail
           export RAFABRU_CONFIG=/tmp/rafabru-ci-config.php
           REQUEST_URI=/write/ php public/write/index.php > /tmp/rafabru-write.html
+          grep -q '/assets/js/published-note-preclaim.js?v=1' /tmp/rafabru-write.html
           grep -q '/assets/js/published-note-state.js?v=2' /tmp/rafabru-write.html
           grep -q '/assets/js/published-note-event-guard.js?v=2' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-extras-preload.js?v=2' /tmp/rafabru-write.html
           grep -q '/assets/js/draft-checklist-repair.js?v=1' /tmp/rafabru-write.html
           grep -q '/assets/js/wall-core-repair.js?v=2' /tmp/rafabru-write.html
+          grep -q '/assets/js/checklist-surface-controller.js?v=2' /tmp/rafabru-write.html
           grep -q '/assets/css/published-notes.css?v=2' /tmp/rafabru-write.html
-          grep -q '/assets/css/wall-core-repair.css?v=3' /tmp/rafabru-write.html
-          grep -q '/assets/js/site-internal-links.js?v=1' /tmp/rafabru-write.html
-          grep -q '/assets/css/site-internal-links.css?v=1' /tmp/rafabru-write.html
-          grep -Fq '.notebook-modal.is-published-unified .notebook-flow' public/assets/css/published-notes.css
-          grep -Fq '.notebook-modal.is-published-checklist .checklist-editor__paper' public/assets/css/published-notes.css
-          grep -Fq '.checklist-editor:not([hidden])' public/assets/css/wall-core-repair.css
+          grep -q '/assets/css/checklist-surface-controller.css?v=2' /tmp/rafabru-write.html
+          grep -Fq '.notebook-modal.is-draft-checklist .notebook-navigation--sheet' public/assets/css/checklist-surface-controller.css
+          grep -Fq '#fffdfd' public/assets/css/checklist-surface-controller.css
+          grep -Fq '.notebook-modal.is-published-checklist .notebook-navigation' public/assets/css/checklist-surface-controller.css
           ! grep -q '/assets/js/wall-hold-move.js' /tmp/rafabru-write.html
           ! grep -q '/assets/js/wall-move-click-guard.js' /tmp/rafabru-write.html
           ! grep -q '/assets/js/wall-extras-fixes.js' /tmp/rafabru-write.html
+          preclaim_line=$(grep -n '/assets/js/published-note-preclaim.js' /tmp/rafabru-write.html | cut -d: -f1)
           published_line=$(grep -n '/assets/js/published-note-state.js' /tmp/rafabru-write.html | cut -d: -f1)
           guard_line=$(grep -n '/assets/js/published-note-event-guard.js' /tmp/rafabru-write.html | cut -d: -f1)
           preload_line=$(grep -n '/assets/js/wall-extras-preload.js' /tmp/rafabru-write.html | cut -d: -f1)
           draft_line=$(grep -n '/assets/js/draft-checklist-repair.js' /tmp/rafabru-write.html | cut -d: -f1)
           repair_line=$(grep -n '/assets/js/wall-core-repair.js' /tmp/rafabru-write.html | cut -d: -f1)
           write_line=$(grep -n '/assets/js/write-wall.js' /tmp/rafabru-write.html | cut -d: -f1)
+          surface_line=$(grep -n '/assets/js/checklist-surface-controller.js' /tmp/rafabru-write.html | cut -d: -f1)
+          test "$preclaim_line" -lt "$published_line"
           test "$published_line" -lt "$guard_line"
           test "$guard_line" -lt "$preload_line"
           test "$preload_line" -lt "$draft_line"
           test "$draft_line" -lt "$repair_line"
           test "$repair_line" -lt "$write_line"
+          test "$write_line" -lt "$surface_line"
           REQUEST_URI=/api/site-data.php php public/api/site-data.php > /tmp/rafabru-site-data.json
           php -r '
           $data = json_decode(file_get_contents("/tmp/rafabru-site-data.json"), true, 512, JSON_THROW_ON_ERROR);
