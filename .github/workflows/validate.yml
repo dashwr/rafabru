@@ -31,7 +31,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           set -euo pipefail
-          find public/assets/js -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          find public/assets/js scripts -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -n1 node --check
           php public/write-script.php > /tmp/rafabru-write-wall.generated.js
           node --check /tmp/rafabru-write-wall.generated.js
           grep -Fq "expandedPages" /tmp/rafabru-write-wall.generated.js
@@ -42,11 +42,12 @@ jobs:
           grep -Fq "renderWritingPages" public/assets/js/published-note-state.js
           grep -Fq "renderChecklist" public/assets/js/published-note-state.js
           grep -Fq ".notebook-modal.is-published-unified" public/assets/js/published-note-event-guard.js
-          grep -Fq "claimPublishedNotebook" public/assets/js/published-note-preclaim.js
+          grep -Fq "clearStaleMovementState" public/assets/js/wall-note-click-controller.js
+          grep -Fq "movementIsActuallyActive" public/assets/js/wall-note-click-controller.js
           grep -Fq "ensureTrailingRows" public/assets/js/checklist-surface-controller.js
           grep -Fq "resetDiscardedDraft" public/assets/js/checklist-surface-controller.js
           grep -Fq "rafabru_wall_client_schema" public/assets/js/wall-client-migrate.js
-          grep -Fq "data.recoveredMural" public/assets/js/wall-loader-watchdog.js || grep -Fq "recoveredMural" public/assets/js/wall-loader-watchdog.js
+          grep -Fq "recoveredMural" public/assets/js/wall-loader-watchdog.js
           grep -Fq "wall/list.php?recovery" public/assets/js/wall-loader-watchdog.js
           ! grep -Fq "published-note-layer" public/assets/js/published-note-state.js
 
@@ -225,33 +226,30 @@ jobs:
           set -euo pipefail
           export RAFABRU_CONFIG=/tmp/rafabru-ci-config.php
           REQUEST_URI=/write/ php public/write/index.php > /tmp/rafabru-write.html
-          grep -q '/assets/js/wall-client-migrate.js?v=20260726-1' /tmp/rafabru-write.html
-          grep -q '/assets/js/published-note-preclaim.js?v=20260726-1' /tmp/rafabru-write.html
-          grep -q '/assets/js/published-note-state.js?v=20260726-1' /tmp/rafabru-write.html
-          grep -q '/assets/js/published-note-event-guard.js?v=20260726-1' /tmp/rafabru-write.html
-          grep -q '/assets/js/wall-extras-preload.js?v=20260726-1' /tmp/rafabru-write.html
-          grep -q '/assets/js/draft-checklist-repair.js?v=20260726-1' /tmp/rafabru-write.html
-          grep -q '/assets/js/wall-core-repair.js?v=20260726-1' /tmp/rafabru-write.html
-          grep -q '/assets/js/checklist-surface-controller.js?v=20260726-1' /tmp/rafabru-write.html
-          grep -q '/assets/js/wall-loader-watchdog.js?v=20260726-1' /tmp/rafabru-write.html
-          grep -q '/assets/css/published-notes.css?v=20260726-1' /tmp/rafabru-write.html
-          grep -q '/assets/css/checklist-surface-controller.css?v=20260726-1' /tmp/rafabru-write.html
-          grep -Fq '.notebook-modal.is-draft-checklist .notebook-navigation--sheet' public/assets/css/checklist-surface-controller.css
-          grep -Fq '#fffdfd' public/assets/css/checklist-surface-controller.css
-          grep -Fq '.notebook-modal.is-published-checklist .notebook-navigation' public/assets/css/checklist-surface-controller.css
+          grep -q '/assets/js/wall-client-migrate.js?v=20260726-2' /tmp/rafabru-write.html
+          grep -q '/assets/js/wall-note-click-controller.js?v=20260726-2' /tmp/rafabru-write.html
+          grep -q '/assets/js/published-note-state.js?v=20260726-2' /tmp/rafabru-write.html
+          grep -q '/assets/js/published-note-event-guard.js?v=20260726-2' /tmp/rafabru-write.html
+          grep -q '/assets/js/wall-extras-preload.js?v=20260726-2' /tmp/rafabru-write.html
+          grep -q '/assets/js/draft-checklist-repair.js?v=20260726-2' /tmp/rafabru-write.html
+          grep -q '/assets/js/wall-core-repair.js?v=20260726-2' /tmp/rafabru-write.html
+          grep -q '/assets/js/checklist-surface-controller.js?v=20260726-2' /tmp/rafabru-write.html
+          grep -q '/assets/js/wall-loader-watchdog.js?v=20260726-2' /tmp/rafabru-write.html
+          grep -q '/assets/css/wall-note-click-controller.css?v=20260726-2' /tmp/rafabru-write.html
+          ! grep -q '/assets/js/published-note-preclaim.js' /tmp/rafabru-write.html
           grep -Fq 'FilesMatch "\\.(?:css|js)\\$"' public/.htaccess
           ! grep -q '/assets/js/wall-hold-move.js' /tmp/rafabru-write.html
           ! grep -q '/assets/js/wall-move-click-guard.js' /tmp/rafabru-write.html
           ! grep -q '/assets/js/wall-extras-fixes.js' /tmp/rafabru-write.html
           migration_line=$(grep -n '/assets/js/wall-client-migrate.js' /tmp/rafabru-write.html | cut -d: -f1)
-          preclaim_line=$(grep -n '/assets/js/published-note-preclaim.js' /tmp/rafabru-write.html | cut -d: -f1)
+          click_line=$(grep -n '/assets/js/wall-note-click-controller.js' /tmp/rafabru-write.html | cut -d: -f1)
           published_line=$(grep -n '/assets/js/published-note-state.js' /tmp/rafabru-write.html | cut -d: -f1)
           preload_line=$(grep -n '/assets/js/wall-extras-preload.js' /tmp/rafabru-write.html | cut -d: -f1)
           write_line=$(grep -n '/assets/js/write-wall.js' /tmp/rafabru-write.html | cut -d: -f1)
           surface_line=$(grep -n '/assets/js/checklist-surface-controller.js' /tmp/rafabru-write.html | cut -d: -f1)
           watchdog_line=$(grep -n '/assets/js/wall-loader-watchdog.js' /tmp/rafabru-write.html | cut -d: -f1)
-          test "$migration_line" -lt "$preclaim_line"
-          test "$preclaim_line" -lt "$published_line"
+          test "$migration_line" -lt "$click_line"
+          test "$click_line" -lt "$published_line"
           test "$published_line" -lt "$preload_line"
           test "$preload_line" -lt "$write_line"
           test "$write_line" -lt "$surface_line"
