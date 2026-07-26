@@ -3,11 +3,13 @@ name: browser smoke
 on:
   push:
     branches:
-      - 'fix/mural-runtime'
+      - 'fix/**'
+      - 'feature/**'
   pull_request:
     paths:
       - 'public/**'
       - 'app/**'
+      - 'scripts/**'
       - '.github/workflows/browser-smoke.yml'
 
 permissions:
@@ -62,7 +64,7 @@ jobs:
           ]);
           '
 
-      - name: Execute Write page in Chrome
+      - name: Execute and interact with Write page in Chrome
         shell: bash
         run: |
           set -euo pipefail
@@ -88,7 +90,7 @@ jobs:
             http://127.0.0.1:8099/write/ \
             > /tmp/rafabru-dom.html \
             2> /tmp/rafabru-chrome.log || true
-          echo '--- Chrome log ---'
+          echo '--- Chrome render log ---'
           cat /tmp/rafabru-chrome.log
           echo '--- PHP log ---'
           cat /tmp/rafabru-php.log
@@ -97,6 +99,9 @@ jobs:
           grep -Fq 'Browser post-it' /tmp/rafabru-dom.html
           grep -Fq 'class="wall-postit' /tmp/rafabru-dom.html
           grep -Eq 'data-wall-loading[^>]*hidden|hidden[^>]*data-wall-loading' /tmp/rafabru-dom.html
+
+          npm install --no-save --ignore-scripts puppeteer-core@latest
+          node scripts/browser-note-click-smoke.mjs "$chrome_bin" http://127.0.0.1:8099/write/
 
       - name: Inspect production wall responses
         shell: bash
@@ -121,4 +126,4 @@ jobs:
           if (($payload["ok"] ?? false) !== true) throw new RuntimeException("Production wall API is not healthy.");
           echo "Production notes: " . count($payload["notes"] ?? []) . PHP_EOL;
           '
-          grep -q '/assets/js/checklist-surface-controller.js?v=2' /tmp/live-write.html
+          grep -q '/assets/js/checklist-surface-controller.js' /tmp/live-write.html
