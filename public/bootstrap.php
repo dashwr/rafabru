@@ -103,10 +103,10 @@ if (str_starts_with($requestPath, '/admin/')) {
                     '/assets/css/site-internal-links.css?v=1',
                 ];
                 if ($isWritePage) {
-                    $styles[] = '/assets/css/wall-extras.css?v=20260726-1';
-                    $styles[] = '/assets/css/wall-core-repair.css?v=20260726-1';
-                    $styles[] = '/assets/css/published-notes.css?v=20260726-1';
-                    $styles[] = '/assets/css/checklist-surface-controller.css?v=20260726-1';
+                    $styles[] = '/assets/css/wall-extras.css?v=20260726-2';
+                    $styles[] = '/assets/css/wall-core-repair.css?v=20260726-2';
+                    $styles[] = '/assets/css/published-notes.css?v=20260726-2';
+                    $styles[] = '/assets/css/checklist-surface-controller.css?v=20260726-2';
                 }
                 $markup = '';
                 foreach ($styles as $href) {
@@ -124,14 +124,14 @@ if (str_starts_with($requestPath, '/admin/')) {
                     if ($position !== false) {
                         $html = substr_replace(
                             $html,
-                            '<script src="/assets/js/wall-client-migrate.js?v=20260726-1" defer></script>' . PHP_EOL
-                            . '    <script src="/assets/js/published-note-preclaim.js?v=20260726-1" defer></script>' . PHP_EOL
-                            . '    <script src="/assets/js/published-note-state.js?v=20260726-1" defer></script>' . PHP_EOL
-                            . '    <script src="/assets/js/published-note-event-guard.js?v=20260726-1" defer></script>' . PHP_EOL
-                            . '    <script src="/assets/js/wall-extras-preload.js?v=20260726-1" defer></script>' . PHP_EOL
-                            . '    <script src="/assets/js/draft-checklist-repair.js?v=20260726-1" defer></script>' . PHP_EOL
-                            . '    <script src="/assets/js/wall-core-repair.js?v=20260726-1" defer></script>' . PHP_EOL
-                            . '    <script src="/assets/js/wall-title-guard.js?v=20260726-1" defer></script>' . PHP_EOL
+                            '<script src="/assets/js/wall-client-migrate.js?v=20260726-2" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/wall-note-click-controller.js?v=20260726-2" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/published-note-state.js?v=20260726-2" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/published-note-event-guard.js?v=20260726-2" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/wall-extras-preload.js?v=20260726-2" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/draft-checklist-repair.js?v=20260726-2" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/wall-core-repair.js?v=20260726-2" defer></script>' . PHP_EOL
+                            . '    <script src="/assets/js/wall-title-guard.js?v=20260726-2" defer></script>' . PHP_EOL
                             . '    ',
                             $position,
                             0
@@ -149,8 +149,8 @@ if (str_starts_with($requestPath, '/admin/')) {
                     '/assets/js/sections-i18n.js?v=1',
                 ];
                 if ($isWritePage) {
-                    $scripts[] = '/assets/js/checklist-surface-controller.js?v=20260726-1';
-                    $scripts[] = '/assets/js/wall-loader-watchdog.js?v=20260726-1';
+                    $scripts[] = '/assets/js/checklist-surface-controller.js?v=20260726-2';
+                    $scripts[] = '/assets/js/wall-loader-watchdog.js?v=20260726-2';
                 }
                 $markup = '';
                 foreach ($scripts as $src) {
